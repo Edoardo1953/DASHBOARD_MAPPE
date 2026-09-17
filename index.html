@@ -71,11 +71,7 @@
       </div>
       <a href="#" class="nav-item" data-view="view-strumenti" id="nav-strumenti">
         <i class="ph ph-wrench"></i>
-        <span>Strumenti</span>
-      </a>
-      <a href="#" class="nav-item" data-view="view-info" id="nav-info">
-        <i class="ph ph-cloud-arrow-up"></i>
-        <span>Condivisione Web</span>
+        <span>Strumenti &amp; Condivisione</span>
       </a>
     </nav>
 
@@ -592,13 +588,70 @@
 
           </div>
 
-          <!-- Card 3: Standard e Impostazioni di Sistema -->
+          <!-- Card 3: Pubblicazione & Condivisione Web Ufficiale -->
+          <div class="card mt-2">
+            <div class="section-header-icon">
+              <div class="kpi-icon-wrap bg-blue"><i class="ph ph-globe"></i></div>
+              <div>
+                <h3>Pubblicazione Web &amp; Condivisione Online</h3>
+                <p class="text-muted">Stato del deployment su GitHub Pages e modalità di condivisione</p>
+              </div>
+            </div>
+
+            <div class="info-content-block">
+              <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:1.4rem;">🌐</span>
+                  <div>
+                    <strong style="color:#166534; font-size:0.92rem; display:block;">Web App Online &amp; Pubblica</strong>
+                    <span style="color:#15803d; font-size:0.78rem;">Raggiungibile da qualsiasi dispositivo (PC, Tablet, Smartphone)</span>
+                  </div>
+                </div>
+                <a href="https://edoardo1953.github.io/DASHBOARD_MAPPE/" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none;">
+                  <i class="ph ph-arrow-square-out"></i> Apri Link Web Ufficiale
+                </a>
+              </div>
+
+              <div class="feature-badges-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div class="feature-badge-item">
+                  <i class="ph ph-git-branch"></i>
+                  <div>
+                    <strong>Repository Ufficiale GitHub</strong>
+                    <span><a href="https://github.com/Edoardo1953/DASHBOARD_MAPPE" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">Edoardo1953 / DASHBOARD_MAPPE</a></span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-file-xls"></i>
+                  <div>
+                    <strong>Database Excel Integrato</strong>
+                    <span>Dati caricati e sincronizzati automaticamente dal foglio <code>Mappe.xlsx</code>.</span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-shield-check"></i>
+                  <div>
+                    <strong>Connessione Sicura HTTPS</strong>
+                    <span>Crittografia SSL / HTTPS gestita e garantita da GitHub Pages.</span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-users-three"></i>
+                  <div>
+                    <strong>Condivisione Immediata</strong>
+                    <span>Invia il link web a colleghi, direttori o agenzie per la consultazione interattiva.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Standard e Impostazioni di Sistema -->
           <div class="card mt-2">
             <div class="section-header-icon">
               <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-check-circle"></i></div>
               <div>
                 <h3>Standard &amp; Formattazione Attiva</h3>
-                <p class="text-muted">Riepilogo delle preferenze grafiche e numeriche impostate</p>
+                <p class="text-muted">Riepilogo delle preferenze grafiche, numeriche e cartografiche impostate</p>
               </div>
             </div>
 
@@ -607,7 +660,7 @@
                 <i class="ph ph-hash"></i>
                 <div>
                   <strong>Formato Numeri Italiano</strong>
-                  <span>Separatore migliaia con il punto (es. <code>1.000</code>, <code>3.550</code>) attivo su tutte le pagine.</span>
+                  <span>Separatore migliaia con il punto (es. <code>1.000</code>, <code>3.550</code>) attivo su tutte le pagine, anni non formattati (<code>2026</code>).</span>
                 </div>
               </div>
               <div class="feature-badge-item">
@@ -621,85 +674,7 @@
                 <i class="ph ph-compass"></i>
                 <div>
                   <strong>Inquadratura Mappa Predefinita</strong>
-                  <span>Coordinate <code>[-20.0, -50.0]</code> Zoom 3 per apertura continentale immediata.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ======================================================== -->
-      <!-- VIEW 6: INFO & CONDIVISIONE WEB                         -->
-      <!-- ======================================================== -->
-      <section class="view-section" id="view-info">
-        <div class="analytics-view-container">
-          <div class="info-grid-2col">
-            <div class="card">
-              <div class="section-header-icon">
-                <div class="kpi-icon-wrap bg-blue"><i class="ph ph-globe"></i></div>
-                <div>
-                  <h3>Pubblicazione &amp; Condivisione Web</h3>
-                  <p class="text-muted">Come condividere questa Dashboard con colleghi e collaboratori</p>
-                </div>
-              </div>
-
-              <div class="info-content-block">
-                <h4>🚀 Opzioni di distribuzione:</h4>
-                <ul class="info-steps-list">
-                  <li>
-                    <strong>Rete Locale Aziendale (Wi-Fi / LAN):</strong>
-                    <p>Qualsiasi dispositivo (computer, tablet o smartphone) connesso alla stessa rete può accedere digitando l'indirizzo IP del tuo computer (es. <code>http://192.168.1.XX:8080</code>).</p>
-                  </li>
-                  <li>
-                    <strong>Server Web Cloud (Render, Railway, VPS, Docker):</strong>
-                    <p>L'applicazione è completamente autonoma e contiene sia il server backend Python (con API REST) che il frontend HTML5/JS moderno, pronta per essere caricata su qualsiasi hosting cloud.</p>
-                  </li>
-                  <li>
-                    <strong>Collegamento Diretto al Database Excel:</strong>
-                    <p>Tutti i dati provengono direttamente dal foglio <code>Mappe.xlsx</code>. Non appena aggiorni il file Excel, la dashboard si aggiorna all'istante.</p>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="section-header-icon">
-                <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-sparkle"></i></div>
-                <div>
-                  <h3>Funzionalità &amp; Caratteristiche Attive</h3>
-                  <p class="text-muted">Tecnologie e moduli integrati nella Suite</p>
-                </div>
-              </div>
-
-              <div class="feature-badges-grid">
-                <div class="feature-badge-item">
-                  <i class="ph ph-map-pin"></i>
-                  <div>
-                    <strong>Cartografia Interattiva</strong>
-                    <span>Leaflet.js con GeoJSON per Mondo, Regioni e Province</span>
-                  </div>
-                </div>
-                <div class="feature-badge-item">
-                  <i class="ph ph-magic-wand"></i>
-                  <div>
-                    <strong>Arricchimento Geografico Automatico</strong>
-                    <span>Compilazione automatica di Stato, Regione e Provincia da Città</span>
-                  </div>
-                </div>
-                <div class="feature-badge-item">
-                  <i class="ph ph-chart-pie"></i>
-                  <div>
-                    <strong>Analisi Canali &amp; OTA</strong>
-                    <span>Ripartizione Privati vs Booking, Expedia, CVC</span>
-                  </div>
-                </div>
-                <div class="feature-badge-item">
-                  <i class="ph ph-file-pdf"></i>
-                  <div>
-                    <strong>Esportazione Multi-formato</strong>
-                    <span>Download diretto tabelle e mappe in Excel (.xlsx), PDF e PNG</span>
-                  </div>
+                  <span>Coordinate <code>[-15.0, -55.0]</code> Zoom 4 per inquadratura ravvicinata e dettagliata dell'America Latina.</span>
                 </div>
               </div>
             </div>
@@ -793,6 +768,6 @@
   <script src="lib/xlsx.full.min.js"></script>
   <script src="lib/html2canvas.min.js"></script>
   <script src="lib/jspdf.umd.min.js"></script>
-  <script src="app.js?v=3.5"></script>
+  <script src="app.js?v=3.6"></script>
 </body>
 </html>

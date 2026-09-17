@@ -486,8 +486,8 @@ function enrichGeographicData(records, cols) {
 // Initialize Leaflet Map
 function initMap() {
   state.map = L.map('map', {
-    center: [-20.0, -50.0],
-    zoom: 3,
+    center: [-15.0, -55.0],
+    zoom: 4,
     zoomControl: true,
     attributionControl: false
   });
@@ -1578,7 +1578,7 @@ function renderMap(aggregated) {
 
   // Adjust View & Zoom
   if (level === 'country' && !state.countryFilter) {
-    state.map.setView([-20.0, -50.0], 3);
+    state.map.setView([-15.0, -55.0], 4);
   } else if (state.geoJsonLayer.getBounds().isValid()) {
     state.map.fitBounds(state.geoJsonLayer.getBounds(), { padding: [30, 30], maxZoom: level === 'province' ? 8 : 6 });
   }
@@ -2297,7 +2297,7 @@ function switchView(viewId) {
       setTimeout(() => {
         state.map.invalidateSize();
         if (state.activeLevel === 'country' && !state.countryFilter) {
-          state.map.setView([-20.0, -50.0], 3);
+          state.map.setView([-15.0, -55.0], 4);
         }
       }, 150);
     }
