@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Analytics · Suite Mappe & Presenze</title>
+  
+  <!-- Fonts (Outfit) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="lib/leaflet.css">
+  
+  <!-- Custom Style -->
+  <link rel="stylesheet" href="style.css?v=3.0">
+</head>
+<body>
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobileSidebarOverlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Left Sidebar Navigation (DASHBOARD_BRASIL Style) -->
+  <aside class="sidebar" id="appSidebar">
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <span class="brand-icon">🏨</span>
+        <div class="brand-text">
+          <h2 class="brand-title">Hotel Analytics</h2>
+          <span class="brand-subtitle">Sombra Suite · Web App</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- Sezione Mappe & Territorio -->
+      <div class="nav-section-title">
+        <span>MAPPE &amp; TERRITORIO</span>
+      </div>
+      <a href="#" class="nav-item active" data-view="view-mappa" id="nav-mappa">
+        <i class="ph ph-globe-hemisphere-west"></i>
+        <span>Mappe Geografiche</span>
+      </a>
+
+      <!-- Sezione Analisi Presenze -->
+      <div class="nav-section-title">
+        <span>ANALISI &amp; REPORT</span>
+      </div>
+      <a href="#" class="nav-item" data-view="view-clienti" id="nav-clienti">
+        <i class="ph ph-users-three"></i>
+        <span>Analisi Clienti Hotel</span>
+      </a>
+      <a href="#" class="nav-item" data-view="view-canali" id="nav-canali">
+        <i class="ph ph-tag"></i>
+        <span>Canali &amp; Agenzie</span>
+      </a>
+      <a href="#" class="nav-item" data-view="view-database" id="nav-database">
+        <i class="ph ph-table"></i>
+        <span>Database &amp; Dati</span>
+      </a>
+
+      <!-- Sezione Strumenti & Sistema -->
+      <div class="nav-section-title">
+        <span>STRUMENTI &amp; SISTEMA</span>
+      </div>
+      <a href="#" class="nav-item" data-view="view-strumenti" id="nav-strumenti">
+        <i class="ph ph-wrench"></i>
+        <span>Strumenti</span>
+      </a>
+      <a href="#" class="nav-item" data-view="view-info" id="nav-info">
+        <i class="ph ph-cloud-arrow-up"></i>
+        <span>Condivisione Web</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar Bottom Status Footer -->
+    <div class="sidebar-footer">
+      <div class="file-status-box" id="fileInfoBadge">
+        <div class="status-indicator-dot live"></div>
+        <div class="status-info">
+          <strong id="excelFileName">Mappe.xlsx</strong>
+          <span id="excelFileMeta">Connesso</span>
+        </div>
+      </div>
+      <select id="sheetSelector" class="sheet-select" title="Seleziona Foglio" style="display:none;"></select>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Bar -->
+    <header class="app-top-bar">
+      <div class="top-bar-left">
+        <button id="btnToggleSidebar" class="btn-icon-toggle" title="Menu Laterale" onclick="toggleSidebar()">
+          <i class="ph ph-list"></i>
+        </button>
+        <div class="page-title-box">
+          <h1 id="pageMainTitle">Mappe Geografiche · Provenienza Clienti</h1>
+          <p class="page-subtitle" id="pageSubTitle">Analisi territoriale delle presenze per Stati, Regioni e Province</p>
+        </div>
+      </div>
+
+      <!-- Quick Switcher Tabs between Excel Sheets (Hidden per user request) -->
+      <div class="sheet-tabs-nav" id="sheetTabsNav" style="display: none !important;">
+        <!-- Dynamically filled with [ 🇮🇹 Italia ] [ 🇧🇷 Brasile ] etc. -->
+      </div>
+
+      <div class="top-bar-actions">
+        <button id="btnChannelModal" class="btn btn-secondary" title="Prospetto Canali di Prenotazione (Privato vs Agenzie)">
+          <i class="ph ph-tag"></i>
+          <span>Canali Prenotazione</span>
+        </button>
+        <button id="btnReload" class="btn btn-primary" title="Ricarica i dati dal file Excel sul Desktop">
+          <i class="ph ph-arrows-clockwise"></i>
+          <span>Ricarica Excel</span>
+        </button>
+        <button id="btnExportPng" class="btn btn-secondary btn-map-only" title="Salva la mappa come file immagine PNG">
+          <i class="ph ph-camera"></i>
+          <span>Salva PNG</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- App Views Container -->
+    <div class="app-views-container">
+      
+      <!-- ======================================================== -->
+      <!-- VIEW 1: MAPPA GEOGRAFICA & TERRITORIO                   -->
+      <!-- ======================================================== -->
+      <section class="view-section active" id="view-mappa">
+        <div class="map-view-layout">
+          <!-- Sidebar Controls on the Map page -->
+          <aside class="map-controls-panel" id="mapControlsPanel">
+            
+            <!-- 4 Hotels Selector (Nord-Est Brasile) -->
+            <div class="card control-group hotel-card-highlight">
+              <div class="section-title">
+                <span class="control-label">🏨 Hotel / Struttura</span>
+                <span class="badge-hint">Nord-Est Brasile</span>
+              </div>
+              <div class="form-field">
+                <select id="hotelFilter" class="form-control font-weight-bold">
+                  <option value="">🏨 Gruppo Sombra (Tutti i 4 Hotel)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Hotel Period Temporal Filters (Anno & Mese) -->
+            <div class="card control-group hotel-period-card">
+              <div class="section-title">
+                <span class="control-label">📅 Periodo Hotel</span>
+                <span class="badge-hint">Filtro Temporale</span>
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="yearFilter">Anno</label>
+                  <select id="yearFilter" class="form-control">
+                    <option value="">Tutti gli Anni</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="monthFilter">Mese</label>
+                  <select id="monthFilter" class="form-control">
+                    <option value="">Tutti i Mesi</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Geographic Level & Vision Selector -->
+            <div class="card control-group">
+              <div class="section-title">
+                <span class="control-label">Visione Mappa</span>
+                <span class="badge-hint">Livello</span>
+              </div>
+              <div class="level-tabs">
+                <button class="level-tab active" data-level="country" id="tabWorld" title="Stati (Mondo): Panoramica con tutti gli Stati di provenienza">
+                  <span class="tab-icon">🌐</span>
+                  <span class="tab-text">Stati (Mondo)</span>
+                </button>
+                <button class="level-tab" data-level="region" id="tabRegion" title="Regioni: Dettaglio Regioni/Stati per il Paese selezionato">
+                  <span class="tab-icon">🏛️</span>
+                  <span class="tab-text">Regioni</span>
+                </button>
+                <button class="level-tab" data-level="province" id="tabProvince" title="Province: Dettaglio Province/Comuni per il Paese selezionato">
+                  <span class="tab-icon">📍</span>
+                  <span class="tab-text">Province</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Territorial / Country Selector (Visione 2) -->
+            <div class="card control-group">
+              <div class="section-title">
+                <span class="control-label">Stato da Esaminare</span>
+                <button id="btnBackToWorld" class="btn btn-xs btn-outline-world" title="Torna alla Mappa del Mondo">🌐 Reset Mondo</button>
+              </div>
+              <div class="form-field">
+                <label for="countryFilter">Seleziona Stato (o clicca sulla mappa)</label>
+                <select id="countryFilter" class="form-control country-select-scroll">
+                  <option value="">🌐 Tutti gli Stati (Mappa Mondo)</option>
+                </select>
+              </div>
+              <div class="form-field mt-2" id="regionFilterContainer">
+                <label for="regionFilter">Regione Specifica</label>
+                <select id="regionFilter" class="form-control">
+                  <option value="">Tutte le Regioni</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Metric & Calculation -->
+            <div class="card control-group">
+              <div class="form-row">
+                <div class="form-field">
+                  <label for="metricSelect">Metrica / Indicatore</label>
+                  <select id="metricSelect" class="form-control"></select>
+                </div>
+                <div class="form-field">
+                  <label for="aggSelect">Calcolo</label>
+                  <select id="aggSelect" class="form-control">
+                    <option value="sum" selected>Somma (Totale)</option>
+                    <option value="avg">Media</option>
+                    <option value="max">Massimo</option>
+                    <option value="min">Minimo</option>
+                    <option value="count">Conteggio Righe</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hotel KPI Summary Cards on Map -->
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Totale Ospiti</div>
+                <div class="kpi-value" id="kpiTotal">-</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Top Provenienza</div>
+                <div class="kpi-value kpi-highlight" id="kpiTopArea">-</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Bacini Attivi</div>
+                <div class="kpi-value" id="kpiCount">-</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Media per Area</div>
+                <div class="kpi-value" id="kpiAvg">-</div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Map Display Container -->
+          <div class="map-display-wrapper" id="mapSection">
+            <div id="map"></div>
+
+            <!-- Floating Summary Card (Prospetto Hotel / Gruppo Sombra & Provenienze) -->
+            <div id="mapSummaryCard" class="map-summary-card">
+              <div class="summary-card-header">
+                <div class="summary-hotel-badge" id="summaryHotelBadge">🏨 Gruppo Sombra</div>
+                <div class="summary-period-badge" id="summaryPeriodBadge">📅 Anno 2026</div>
+              </div>
+              <div class="summary-card-title" id="summaryCardTitle">🌍 Provenienza Ospiti per Stato</div>
+              <div class="summary-card-body" id="summaryCardBody">
+                <div class="summary-items-list" id="summaryItemsList">
+                  <!-- Dynamically rendered rows -->
+                </div>
+              </div>
+              <div class="summary-card-footer">
+                <span>Totale Ospiti:</span>
+                <span class="summary-total-val" id="summaryTotalGuests">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 2: ANALISI CLIENTI HOTEL                           -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-clienti">
+        <div class="analytics-view-container">
+          <!-- Top KPI Cards -->
+          <div class="analytics-kpi-row">
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-blue"><i class="ph ph-users"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Totale Ospiti Registrati</span>
+                <h3 class="kpi-num" id="clientiKpiTotalGuests">-</h3>
+                <span class="kpi-sub">Presenze complessive nel database</span>
+              </div>
+            </div>
+
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-buildings"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Struttura Più Frequentata</span>
+                <h3 class="kpi-num" id="clientiKpiTopHotel">-</h3>
+                <span class="kpi-sub" id="clientiKpiTopHotelGuests">- ospiti</span>
+              </div>
+            </div>
+
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-orange"><i class="ph ph-globe"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Primo Paese di Origine</span>
+                <h3 class="kpi-num" id="clientiKpiTopCountry">-</h3>
+                <span class="kpi-sub" id="clientiKpiTopCountryPct">- % del totale</span>
+              </div>
+            </div>
+
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-purple"><i class="ph ph-calendar-check"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Media Mensile Presenze</span>
+                <h3 class="kpi-num" id="clientiKpiMonthlyAvg">-</h3>
+                <span class="kpi-sub">Media ospiti per mese attivo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="charts-grid-2col">
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title">Distribuzione Ospiti per Struttura Hotel</h3>
+                  <p class="chart-subtitle">Quota di presenze nei 4 Hotel del Gruppo</p>
+                </div>
+                <span class="badge-tag">Gruppo Sombra</span>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartHotelDistribution"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title">Trend Temporale Mensile</h3>
+                  <p class="chart-subtitle">Andamento delle presenze mese per mese</p>
+                </div>
+                <span class="badge-tag">Esercizio</span>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartMonthlyTrend"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card mt-3">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Top 10 Città di Provenienza dei Clienti</h3>
+                <p class="chart-subtitle">Classifica delle principali città e bacini di provenienza</p>
+              </div>
+              <span class="badge-tag">Città &amp; Bacini</span>
+            </div>
+            <div class="chart-canvas-container tall">
+              <canvas id="chartTopCities"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 3: CANALI & AGENZIE                                 -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-canali">
+        <div class="analytics-view-container">
+          <!-- KPI Row for Channels -->
+          <div class="analytics-kpi-row">
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-user"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Canale Diretto (Privati)</span>
+                <h3 class="kpi-num" id="canaliPageDirectGuests">-</h3>
+                <span class="kpi-sub" id="canaliPageDirectPct">- % del totale presenze</span>
+              </div>
+            </div>
+
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-blue"><i class="ph ph-airplane-tilt"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Canali OTA &amp; Agenzie</span>
+                <h3 class="kpi-num" id="canaliPageOtaGuests">-</h3>
+                <span class="kpi-sub" id="canaliPageOtaPct">- % del totale presenze</span>
+              </div>
+            </div>
+
+            <div class="analytics-kpi-card">
+              <div class="kpi-icon-wrap bg-purple"><i class="ph ph-crown"></i></div>
+              <div class="kpi-content">
+                <span class="kpi-label">Canale / Agenzia Principale</span>
+                <h3 class="kpi-num" id="canaliPageTopChannel">-</h3>
+                <span class="kpi-sub" id="canaliPageTopChannelGuests">- ospiti</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel Chart + Detailed Table -->
+          <div class="charts-grid-2col">
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title">Quote di Mercato Canali</h3>
+                  <p class="chart-subtitle">Ripartizione percentuale Privati vs OTA</p>
+                </div>
+                <span class="badge-tag">Quote %</span>
+              </div>
+              <div class="chart-canvas-container flex-center">
+                <canvas id="chartChannelShare"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title">Canali per Singolo Hotel</h3>
+                  <p class="chart-subtitle">Confronto canali di prenotazione tra le strutture</p>
+                </div>
+                <span class="badge-tag">Confronto</span>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="chartChannelByHotel"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Full Channel Detail Table with Export buttons -->
+          <div class="card mt-3">
+            <div class="table-card-header">
+              <div>
+                <h3 class="chart-title">Prospetto Analitico Canali di Prenotazione</h3>
+                <p class="chart-subtitle">Dettaglio con subtotali Privati, Agenzie e Totale Generale</p>
+              </div>
+              <div class="table-actions">
+                <button id="btnExportChannelPageExcel" class="btn btn-secondary btn-sm" title="Esporta in Excel">
+                  <i class="ph ph-file-xls"></i> Scarica Excel
+                </button>
+                <button id="btnExportChannelPagePdf" class="btn btn-secondary btn-sm" title="Esporta in PDF">
+                  <i class="ph ph-file-pdf"></i> Scarica PDF
+                </button>
+              </div>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="channel-table">
+                <thead>
+                  <tr>
+                    <th>Provenienza / Canale</th>
+                    <th style="text-align:right;">Numero Ospiti</th>
+                    <th style="width:200px; text-align:right;">Quota %</th>
+                  </tr>
+                </thead>
+                <tbody id="canaliPageTableBody">
+                  <!-- Dynamically rendered -->
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th>TOTALE GENERALE</th>
+                    <th style="text-align:right;" id="canaliPageFooterTotalGuests">-</th>
+                    <th style="text-align:right;" id="canaliPageFooterTotalPct">100.0%</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 4: DATABASE & DATI EXCEL                           -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-database">
+        <div class="analytics-view-container">
+          <div class="card">
+            <div class="table-card-header">
+              <div>
+                <h3 class="chart-title">Tabella Dati Database (<span id="dbRowCount">0</span> record)</h3>
+                <p class="chart-subtitle">Tutti i record e le colonne caricate dal file Excel attivo</p>
+              </div>
+              <div class="table-controls-row">
+                <div class="search-input-wrap">
+                  <i class="ph ph-magnifying-glass"></i>
+                  <input type="text" id="dbTableSearch" class="form-control input-search" placeholder="Cerca hotel, città, stato, canale...">
+                </div>
+                <button id="btnExportDbExcel" class="btn btn-primary btn-sm" title="Scarica tutti i dati in formato Excel">
+                  <i class="ph ph-download-simple"></i> Esporta Excel
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table id="dbTable" class="custom-table">
+                <thead>
+                  <tr id="dbTableHeaderRow"></tr>
+                </thead>
+                <tbody id="dbTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 5: STRUMENTI & IMPOSTAZIONI GRAFICHE                -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-strumenti">
+        <div class="analytics-view-container">
+          <div class="info-grid-2col">
+            
+            <!-- Card 1: Aspetto Cartografico & Mappe -->
+            <div class="card">
+              <div class="section-header-icon">
+                <div class="kpi-icon-wrap bg-blue"><i class="ph ph-palette"></i></div>
+                <div>
+                  <h3>Aspetto Grafico &amp; Stile Cartografico</h3>
+                  <p class="text-muted">Personalizzazione colori, gradienti e layer di sfondo della mappa</p>
+                </div>
+              </div>
+
+              <div class="form-field" style="margin-bottom: 16px;">
+                <label for="paletteSelect"><strong>Scala Colori Densità Clienti</strong></label>
+                <select id="paletteSelect" class="form-control" style="margin-top: 6px;">
+                  <option value="blue">🔵 Blu Hotel (Elegante Sombra)</option>
+                  <option value="emerald">🟢 Smeraldo (Green Theme)</option>
+                  <option value="crimson">🔴 Corallo / Rosso Intenso</option>
+                  <option value="purple">🟣 Viola &amp; Magenta Moderno</option>
+                  <option value="heat">🔥 Mappa di Calore (Giallo-Rosso)</option>
+                  <option value="viridis">🌈 Viridis (Multi-colore Scientifico)</option>
+                  <option value="sunset">🌅 Tramonto (Arancio-Viola)</option>
+                </select>
+                <span class="text-muted" style="font-size:0.75rem; margin-top:4px; display:block;">Applica una scala cromatica per evidenziare visivamente gli Stati e le Regioni con più ospiti.</span>
+              </div>
+
+              <div class="form-field">
+                <label for="baseMapSelect"><strong>Sfondo Cartografico del Mappamondo</strong></label>
+                <select id="baseMapSelect" class="form-control" style="margin-top: 6px;">
+                  <option value="osm_light">OpenStreetMap Chiaro (Consigliato)</option>
+                  <option value="esri_gray">Esri Grigio Chiaro Elegante</option>
+                  <option value="osm_standard">OpenStreetMap Standard</option>
+                  <option value="satellite">Satellite / Vista Aerea Globale</option>
+                  <option value="none">Sfondo Bianco Vettoriale (Solo confini)</option>
+                </select>
+                <span class="text-muted" style="font-size:0.75rem; margin-top:4px; display:block;">Seleziona il provider cartografico di sfondo per la mappa geografica.</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Visualizzazione Etichette & Confini -->
+            <div class="card">
+              <div class="section-header-icon">
+                <div class="kpi-icon-wrap bg-purple"><i class="ph ph-sliders"></i></div>
+                <div>
+                  <h3>Etichette &amp; Visualizzazione Territoriale</h3>
+                  <p class="text-muted">Opzioni di visualizzazione per etichette clienti e perimetri</p>
+                </div>
+              </div>
+
+              <div class="options-group" style="display:flex; flex-direction:column; gap:16px;">
+                <label class="form-check" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                  <input type="checkbox" id="chkPermanentLabels" checked style="margin-top:3px; transform: scale(1.15);">
+                  <div>
+                    <strong style="color:#0f172a; font-size:0.88rem;">Etichette Clienti Sempre Visibili</strong>
+                    <p class="text-muted" style="font-size:0.76rem; margin:2px 0 0 0;">Mostra i badge scuri con bandiera, nome dello stato/regione e conteggio ospiti sempre aperti sulla mappa.</p>
+                  </div>
+                </label>
+
+                <label class="form-check" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                  <input type="checkbox" id="chkSpotlightFlou" checked style="margin-top:3px; transform: scale(1.15);">
+                  <div>
+                    <strong style="color:#0f172a; font-size:0.88rem;">Effetto "Spotlight Flou"</strong>
+                    <p class="text-muted" style="font-size:0.76rem; margin:2px 0 0 0;">Quando selezioni uno Stato da esaminare (es. Brasile), scurisce e rende flou il resto del mondo.</p>
+                  </div>
+                </label>
+
+                <label class="form-check" style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                  <input type="checkbox" id="chkRegionBorder" checked style="margin-top:3px; transform: scale(1.15);">
+                  <div>
+                    <strong style="color:#0f172a; font-size:0.88rem;">Evidenziazione Confini Regionali in Blu</strong>
+                    <p class="text-muted" style="font-size:0.76rem; margin:2px 0 0 0;">Sovrappone una linea blu nitida a tutti i confini delle Regioni e degli Stati federali.</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Card 3: Standard e Impostazioni di Sistema -->
+          <div class="card mt-2">
+            <div class="section-header-icon">
+              <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-check-circle"></i></div>
+              <div>
+                <h3>Standard &amp; Formattazione Attiva</h3>
+                <p class="text-muted">Riepilogo delle preferenze grafiche e numeriche impostate</p>
+              </div>
+            </div>
+
+            <div class="feature-badges-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+              <div class="feature-badge-item">
+                <i class="ph ph-hash"></i>
+                <div>
+                  <strong>Formato Numeri Italiano</strong>
+                  <span>Separatore migliaia con il punto (es. <code>1.000</code>, <code>3.550</code>) attivo su tutte le pagine.</span>
+                </div>
+              </div>
+              <div class="feature-badge-item">
+                <i class="ph ph-percent"></i>
+                <div>
+                  <strong>Quote &amp; Percentuali</strong>
+                  <span>Calcolo automatico percentuale con 1 decimale su tutti i prospetti (es. <code>26.8%</code>).</span>
+                </div>
+              </div>
+              <div class="feature-badge-item">
+                <i class="ph ph-compass"></i>
+                <div>
+                  <strong>Inquadratura Mappa Predefinita</strong>
+                  <span>Coordinate <code>[-20.0, -50.0]</code> Zoom 3 per apertura continentale immediata.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 6: INFO & CONDIVISIONE WEB                         -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-info">
+        <div class="analytics-view-container">
+          <div class="info-grid-2col">
+            <div class="card">
+              <div class="section-header-icon">
+                <div class="kpi-icon-wrap bg-blue"><i class="ph ph-globe"></i></div>
+                <div>
+                  <h3>Pubblicazione &amp; Condivisione Web</h3>
+                  <p class="text-muted">Come condividere questa Dashboard con colleghi e collaboratori</p>
+                </div>
+              </div>
+
+              <div class="info-content-block">
+                <h4>🚀 Opzioni di distribuzione:</h4>
+                <ul class="info-steps-list">
+                  <li>
+                    <strong>Rete Locale Aziendale (Wi-Fi / LAN):</strong>
+                    <p>Qualsiasi dispositivo (computer, tablet o smartphone) connesso alla stessa rete può accedere digitando l'indirizzo IP del tuo computer (es. <code>http://192.168.1.XX:8080</code>).</p>
+                  </li>
+                  <li>
+                    <strong>Server Web Cloud (Render, Railway, VPS, Docker):</strong>
+                    <p>L'applicazione è completamente autonoma e contiene sia il server backend Python (con API REST) che il frontend HTML5/JS moderno, pronta per essere caricata su qualsiasi hosting cloud.</p>
+                  </li>
+                  <li>
+                    <strong>Collegamento Diretto al Database Excel:</strong>
+                    <p>Tutti i dati provengono direttamente dal foglio <code>Mappe.xlsx</code>. Non appena aggiorni il file Excel, la dashboard si aggiorna all'istante.</p>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="section-header-icon">
+                <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-sparkle"></i></div>
+                <div>
+                  <h3>Funzionalità &amp; Caratteristiche Attive</h3>
+                  <p class="text-muted">Tecnologie e moduli integrati nella Suite</p>
+                </div>
+              </div>
+
+              <div class="feature-badges-grid">
+                <div class="feature-badge-item">
+                  <i class="ph ph-map-pin"></i>
+                  <div>
+                    <strong>Cartografia Interattiva</strong>
+                    <span>Leaflet.js con GeoJSON per Mondo, Regioni e Province</span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-magic-wand"></i>
+                  <div>
+                    <strong>Arricchimento Geografico Automatico</strong>
+                    <span>Compilazione automatica di Stato, Regione e Provincia da Città</span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-chart-pie"></i>
+                  <div>
+                    <strong>Analisi Canali &amp; OTA</strong>
+                    <span>Ripartizione Privati vs Booking, Expedia, CVC</span>
+                  </div>
+                </div>
+                <div class="feature-badge-item">
+                  <i class="ph ph-file-pdf"></i>
+                  <div>
+                    <strong>Esportazione Multi-formato</strong>
+                    <span>Download diretto tabelle e mappe in Excel (.xlsx), PDF e PNG</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Channel / Booking Source Modal (also accessible from button) -->
+  <div id="channelModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🏷️</span>
+          <div>
+            <h3>Provenienza / Canali di Prenotazione</h3>
+            <p class="modal-subtitle" id="channelModalSubtitle">Prospetto analitico Ospiti per Canale di Prenotazione</p>
+          </div>
+        </div>
+        <button id="btnCloseChannelModal" class="modal-close-btn" title="Chiudi">✕</button>
+      </div>
+
+      <div class="modal-kpi-row">
+        <div class="modal-kpi-card">
+          <span class="modal-kpi-label">Totale Ospiti nel Periodo</span>
+          <strong class="modal-kpi-val" id="channelTotalGuests">-</strong>
+        </div>
+        <div class="modal-kpi-card highlight-green">
+          <span class="modal-kpi-label">👤 Canale Diretto (Privato)</span>
+          <strong class="modal-kpi-val" id="channelDirectGuests">-</strong>
+        </div>
+        <div class="modal-kpi-card highlight-blue">
+          <span class="modal-kpi-label">🏨 Canali OTA / Agenzie</span>
+          <strong class="modal-kpi-val" id="channelOtaGuests">-</strong>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <table class="channel-table">
+          <thead>
+            <tr>
+              <th>Provenienza / Canale</th>
+              <th style="text-align:right;">Numero Ospiti</th>
+              <th style="width:170px; text-align:right;">Quota %</th>
+            </tr>
+          </thead>
+          <tbody id="channelTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>TOTALE GENERALE</th>
+              <th style="text-align:right;" id="channelFooterTotalGuests">-</th>
+              <th style="text-align:right;" id="channelFooterTotalPct">100.0%</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="modal-footer">
+        <span class="modal-footer-note">💡 Dati sincronizzati con i filtri attivi (Hotel e Periodo)</span>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btnExportChannelExcel" class="btn btn-secondary btn-sm" title="Scarica il prospetto in formato Excel (.xlsx)">
+            <i class="ph ph-file-xls"></i> Scarica Excel
+          </button>
+          <button id="btnExportChannelPdf" class="btn btn-secondary btn-sm" title="Scarica il prospetto in formato PDF (.pdf)">
+            <i class="ph ph-file-pdf"></i> Scarica PDF
+          </button>
+          <button id="btnCloseChannelModalBtn" class="btn btn-primary btn-sm">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Toast Notification -->
+  <div id="toastNotification" class="toast-notification hidden">
+    <span class="toast-icon">✅</span>
+    <span id="toastMessage">Operazione completata con successo!</span>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p id="loadingMessage">Caricamento dati...</p>
+  </div>
+
+  <!-- Scripts -->
+  <script src="lib/leaflet.js"></script>
+  <script src="lib/xlsx.full.min.js"></script>
+  <script src="lib/html2canvas.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script src="app.js?v=3.3"></script>
+</body>
+</html>
