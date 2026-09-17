@@ -602,50 +602,80 @@ function createSpotlightMask(targetCountryFeature) {
 async function fetchExcelData(sheetName = null) {
   showLoading('Caricamento dati Hotel...');
   try {
-    const url = sheetName ? `/api/data?sheet=${encodeURIComponent(sheetName)}` : '/api/data';
-    let resp = null;
     let result = null;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-    try {
-      resp = await fetch(url);
-      if (resp.ok) {
-        result = await resp.json();
+    // 1. If running on localhost with Python backend active, fetch from /api/data
+    if (isLocalhost) {
+      try {
+        const url = sheetName ? `/api/data?sheet=${encodeURIComponent(sheetName)}` : '/api/data';
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const json = await resp.json();
+          if (json && json.success) {
+            result = json;
+          }
+        }
+      } catch (e) {
+        console.warn('Backend API not responding, falling back to static file parsing...', e);
       }
-    } catch (e) {
-      // Backend not running (e.g. on GitHub Pages) -> Fallback to client-side parsing of Mappe.xlsx
     }
 
+    // 2. If running on GitHub Pages or if API failed, read Mappe.xlsx directly in browser via SheetJS
     if (!result || !result.success) {
-      // Fallback: Read static Mappe.xlsx directly from repository root via SheetJS
       try {
-        const fileResp = await fetch('Mappe.xlsx');
+        const fileResp = await fetch('Mappe.xlsx', { cache: 'no-cache' });
         if (fileResp.ok) {
           const arrayBuffer = await fileResp.arrayBuffer();
           const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
           const sheets = workbook.SheetNames;
           const targetSheet = sheetName && sheets.includes(sheetName) ? sheetName : sheets[0];
           const worksheet = workbook.Sheets[targetSheet];
-          const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Get raw rows including formula values (rawJson)
+          const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
 
           let bestRow = 0;
+          let bestScore = -1;
+          const searchKeywords = ['hotel', 'paese', 'stato', 'regione', 'provincia', 'clienti', 'canale', 'provenienza', 'anno', 'mese', 'citta', 'città'];
+
           rawJson.forEach((row, idx) => {
-            if (row && row.some(cell => typeof cell === 'string' && /hotel|paese|stato|regione|provincia|clienti|sales|canale|provenienza|anno|mese/i.test(cell))) {
+            if (!row || !Array.isArray(row)) return;
+            let score = 0;
+            row.forEach(cell => {
+              if (typeof cell === 'string') {
+                const cLower = cell.trim().toLowerCase();
+                if (searchKeywords.some(kw => cLower.includes(kw))) {
+                  score += 1;
+                }
+              }
+            });
+            if (score > bestScore) {
+              bestScore = score;
               bestRow = idx;
             }
           });
 
           const rawHeaders = rawJson[bestRow] || [];
-          const headers = rawHeaders.map((h, i) => h !== undefined && h !== null && String(h).trim() ? String(h).trim() : `Colonna_${i+1}`);
+          const headers = rawHeaders.map((h, i) => (h !== undefined && h !== null && String(h).trim()) ? String(h).trim() : `Colonna_${i+1}`);
           const records = [];
 
           for (let i = bestRow + 1; i < rawJson.length; i++) {
             const row = rawJson[i];
             if (!row || row.length === 0 || row.every(c => c === null || c === undefined || String(c).trim() === '')) continue;
             const item = {};
+            let hasData = false;
             headers.forEach((h, cIdx) => {
-              item[h] = row[cIdx] !== undefined ? row[cIdx] : null;
+              let val = row[cIdx];
+              if (val !== undefined && val !== null) {
+                if (typeof val === 'string') val = val.trim();
+                item[h] = val;
+                hasData = true;
+              } else {
+                item[h] = null;
+              }
             });
-            records.push(item);
+            if (hasData) records.push(item);
           }
 
           const detected = {
@@ -666,7 +696,7 @@ async function fetchExcelData(sheetName = null) {
           result = {
             success: true,
             filename: 'Mappe.xlsx',
-            last_modified: 'Locale / Web GitHub',
+            last_modified: 'GitHub Web',
             current_sheet: targetSheet,
             sheets: sheets,
             data: records,
@@ -676,7 +706,7 @@ async function fetchExcelData(sheetName = null) {
           };
         }
       } catch (staticErr) {
-        console.warn('Fallback static file fetch error:', staticErr);
+        console.error('Errore lettura Mappe.xlsx statico:', staticErr);
       }
     }
 
