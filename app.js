@@ -624,15 +624,26 @@ async function fetchExcelData(sheetName = null) {
     // 2. If running on GitHub Pages or if API failed, read Mappe.xlsx directly in browser via SheetJS
     if (!result || !result.success) {
       try {
-        const fileResp = await fetch('Mappe.xlsx', { cache: 'no-cache' });
-        if (fileResp.ok) {
+        const candidatePaths = ['Mappe.xlsx', './Mappe.xlsx', '/DASHBOARD_MAPPE/Mappe.xlsx'];
+        let fileResp = null;
+        for (let p of candidatePaths) {
+          try {
+            const r = await fetch(p, { cache: 'no-cache' });
+            if (r.ok) {
+              fileResp = r;
+              break;
+            }
+          } catch(errPath) {}
+        }
+
+        if (fileResp && fileResp.ok) {
           const arrayBuffer = await fileResp.arrayBuffer();
-          const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+          const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array', cellDates: true });
           const sheets = workbook.SheetNames;
           const targetSheet = sheetName && sheets.includes(sheetName) ? sheetName : sheets[0];
           const worksheet = workbook.Sheets[targetSheet];
           
-          // Get raw rows including formula values (rawJson)
+          // Get raw rows
           const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
 
           let bestRow = 0;
