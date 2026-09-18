@@ -669,31 +669,12 @@ async function fetchExcelData(sheetName = null) {
 
           const rawHeaders = rawJson[bestRow] || [];
           const headers = rawHeaders.map((h, i) => (h !== undefined && h !== null && String(h).trim()) ? String(h).trim() : `Colonna_${i+1}`);
-          const records = [];
-
-          for (let i = bestRow + 1; i < rawJson.length; i++) {
-            const row = rawJson[i];
-            if (!row || row.length === 0 || row.every(c => c === null || c === undefined || String(c).trim() === '')) continue;
-            const item = {};
-            let hasData = false;
-            headers.forEach((h, cIdx) => {
-              let val = row[cIdx];
-              if (val !== undefined && val !== null) {
-                if (typeof val === 'string') val = val.trim();
-                item[h] = val;
-                hasData = true;
-              } else {
-                item[h] = null;
-              }
-            });
-            if (hasData) records.push(item);
-          }
 
           const detected = {
             hotel: headers.find(h => /hotel|struttura|albergo|resort/i.test(h)) || null,
             year: headers.find(h => /anno|year/i.test(h)) || null,
             month: headers.find(h => /mese|month/i.test(h)) || null,
-            country: headers.find(h => /paese|stato|country/i.test(h)) || null,
+            country: headers.find(h => /^paese$|^country$|^nazione$/i.test(h)) || headers.find(h => /paese|country|nazione/i.test(h)) || headers.find(h => /^stato$/i.test(h)) || null,
             region: headers.find(h => /regione|region|estado/i.test(h)) || null,
             province: headers.find(h => /^provincia$|^province$/i.test(h)) || headers.find(h => /provincia|province/i.test(h) && !/citta|città/i.test(h)) || null,
             city: headers.find(h => /citta|città|city/i.test(h)) || null,
@@ -701,6 +682,37 @@ async function fetchExcelData(sheetName = null) {
             metrics: headers.filter(h => !/hotel|struttura|albergo|resort|anno|mese|paese|stato|country|regione|region|provincia|citta|città|city|preovenienza|provenienza|canale|channel|fonte|agenzia/i.test(h)),
             all: headers
           };
+
+          const records = [];
+
+          for (let i = bestRow + 1; i < rawJson.length; i++) {
+            const row = rawJson[i];
+            if (!row || row.length === 0 || row.every(c => c === null || c === undefined || String(c).trim() === '')) continue;
+            const item = {};
+            let isTotalRow = false;
+            headers.forEach((h, cIdx) => {
+              let val = row[cIdx];
+              if (val !== undefined && val !== null) {
+                if (typeof val === 'string') {
+                  val = val.trim();
+                  if (/^(totale|total|somma|grand total)$/i.test(val)) {
+                    isTotalRow = true;
+                  }
+                }
+                item[h] = val;
+              } else {
+                item[h] = null;
+              }
+            });
+
+            // Ensure row has at least one valid business dimension and is not a total/summary row
+            const dimCols = [detected.hotel, detected.country, detected.region, detected.province, detected.city].filter(Boolean);
+            const hasDim = dimCols.some(d => item[d] !== null && item[d] !== undefined && String(item[d]).trim() !== '');
+
+            if (hasDim && !isTotalRow) {
+              records.push(item);
+            }
+          }
 
           const hotelsFound = detected.hotel ? [...new Set(records.map(r => r[detected.hotel]).filter(Boolean))].sort() : [];
 
@@ -1051,6 +1063,15 @@ function getAggregatedData() {
   const pCol = state.columns.province;
   const mCol = state.activeMetric;
   const aggType = state.activeAgg;
+
+  // When drilling down to region or province, ensure a country is selected
+  if ((level === 'region' || level === 'province') && !state.countryFilter) {
+    const firstCountry = cCol ? (state.excelData.find(r => r[cCol]) || {})[cCol] || 'BRASILE' : 'BRASILE';
+    state.countryFilter = String(firstCountry).toUpperCase();
+    const cSelect = document.getElementById('countryFilter');
+    if (cSelect) cSelect.value = state.countryFilter;
+    updateRegionFilter();
+  }
 
   const rows = getFilteredRows();
 
@@ -3253,24 +3274,11 @@ function parseClientFile(file) {
       });
 
       const headers = jsonData[bestRow].map(h => String(h || '').trim());
-      const records = [];
-
-      for (let i = bestRow + 1; i < jsonData.length; i++) {
-        const row = jsonData[i];
-        if (!row || row.length === 0) continue;
-        const item = {};
-        headers.forEach((h, cIdx) => {
-          if (h) item[h] = row[cIdx] !== undefined ? row[cIdx] : null;
-        });
-        records.push(item);
-      }
-
-      state.excelData = records;
-      state.columns = {
+      const detectedCols = {
         hotel: headers.find(h => /hotel|struttura|albergo|resort/i.test(h)) || null,
         year: headers.find(h => /anno|year/i.test(h)) || null,
         month: headers.find(h => /mese|month/i.test(h)) || null,
-        country: headers.find(h => /paese|stato|country/i.test(h)) || null,
+        country: headers.find(h => /^paese$|^country$|^nazione$/i.test(h)) || headers.find(h => /paese|country|nazione/i.test(h)) || headers.find(h => /^stato$/i.test(h)) || null,
         region: headers.find(h => /regione|region|estado/i.test(h)) || null,
         province: headers.find(h => /^provincia$|^province$/i.test(h)) || headers.find(h => /provincia|province/i.test(h) && !/citta|città/i.test(h)) || null,
         city: headers.find(h => /citta|città|city/i.test(h)) || null,
@@ -3278,6 +3286,39 @@ function parseClientFile(file) {
         metrics: headers.filter(h => !/hotel|struttura|albergo|resort|anno|mese|paese|stato|country|regione|region|provincia|citta|città|city|preovenienza|provenienza|canale|channel|fonte/i.test(h)),
         all: headers
       };
+
+      const records = [];
+
+      for (let i = bestRow + 1; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        if (!row || row.length === 0) continue;
+        const item = {};
+        let isTotalRow = false;
+        headers.forEach((h, cIdx) => {
+          let val = row[cIdx];
+          if (val !== undefined && val !== null) {
+            if (typeof val === 'string') {
+              val = val.trim();
+              if (/^(totale|total|somma|grand total)$/i.test(val)) {
+                isTotalRow = true;
+              }
+            }
+            item[h] = val;
+          } else {
+            item[h] = null;
+          }
+        });
+
+        const dimCols = [detectedCols.hotel, detectedCols.country, detectedCols.region, detectedCols.province, detectedCols.city].filter(Boolean);
+        const hasDim = dimCols.some(d => item[d] !== null && item[d] !== undefined && String(item[d]).trim() !== '');
+
+        if (hasDim && !isTotalRow) {
+          records.push(item);
+        }
+      }
+
+      state.excelData = records;
+      state.columns = detectedCols;
 
       // Auto-enrich geographic data from city
       enrichGeographicData(state.excelData, state.columns);
