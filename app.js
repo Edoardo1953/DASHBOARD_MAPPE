@@ -288,6 +288,15 @@ function normalizeStr(str) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+function normalizeCountryName(countryName) {
+  if (!countryName) return '';
+  const str = String(countryName).trim().toLowerCase();
+  const norm = normalizeStr(str);
+  const alias = COUNTRY_ALIASES[str] || COUNTRY_ALIASES[norm];
+  if (alias) return normalizeStr(alias);
+  return norm;
+}
+
 // Comprehensive City -> (Country, Region, Province) Mapping
 const CITY_LOOKUP = {
   // Brasile
@@ -1035,17 +1044,13 @@ function getFilteredRows() {
     if (state.monthFilter && moCol && String(r[moCol]) !== String(state.monthFilter)) return false;
     
     // Country filter (applied when user selects a specific country or is in region/province view)
-    if (targetCountry && cCol) {
+    if (targetCountry && targetCountry !== 'TUTTI' && targetCountry !== '' && cCol) {
       const cVal = r[cCol];
       if (!cVal && targetCountry !== 'Non indicato') return false;
       if (cVal) {
-        const cNorm = normalizeStr(cVal);
-        const fNorm = normalizeStr(targetCountry);
-        if (cNorm !== fNorm && !cNorm.includes(fNorm) && !fNorm.includes(cNorm)) {
-          const alias1 = COUNTRY_ALIASES[cNorm] ? normalizeStr(COUNTRY_ALIASES[cNorm]) : cNorm;
-          const alias2 = COUNTRY_ALIASES[fNorm] ? normalizeStr(COUNTRY_ALIASES[fNorm]) : fNorm;
-          if (alias1 !== alias2) return false;
-        }
+        const normTarget = normalizeCountryName(targetCountry);
+        const normRow = normalizeCountryName(cVal);
+        if (normTarget !== normRow) return false;
       }
     }
     // Region filter
@@ -1747,30 +1752,7 @@ function updateDataTable() {
     headerRow.appendChild(th);
   });
 
-  let filtered = state.excelData;
-  // Filter by hotel
-  if (state.hotelFilter && state.columns.hotel) {
-    filtered = filtered.filter(r => {
-      const v = String(r[state.columns.hotel] || '').toLowerCase();
-      return v.includes(state.hotelFilter.toLowerCase()) || state.hotelFilter.toLowerCase().includes(v);
-    });
-  }
-  // Filter by year
-  if (state.yearFilter && state.columns.year) {
-    filtered = filtered.filter(r => String(r[state.columns.year]) === String(state.yearFilter));
-  }
-  // Filter by month
-  if (state.monthFilter && state.columns.month) {
-    filtered = filtered.filter(r => String(r[state.columns.month]) === String(state.monthFilter));
-  }
-  // Filter by country
-  if (state.countryFilter && state.columns.country) {
-    const fNorm = normalizeStr(state.countryFilter);
-    filtered = filtered.filter(r => {
-      const v = normalizeStr(r[state.columns.country]);
-      return v === fNorm || v.includes(fNorm) || fNorm.includes(v);
-    });
-  }
+  let filtered = getFilteredRows();
 
   // Text search
   if (filterVal) {
@@ -2366,38 +2348,6 @@ window.toggleSidebar = function() {
     if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('open'));
   }
 };
-
-// ========================================================
-// HELPER: FILTER ROWS BY ACTIVE FILTERS
-// ========================================================
-function getFilteredRows() {
-  let rows = state.excelData || [];
-  const hCol = state.columns.hotel;
-  const yCol = state.columns.year;
-  const moCol = state.columns.month;
-  const cCol = state.columns.country;
-
-  // 1. Hotel filter
-  if (state.hotelFilter && hCol) {
-    const fH = state.hotelFilter.toLowerCase();
-    rows = rows.filter(r => {
-      const v = String(r[hCol] || '').toLowerCase();
-      return v.includes(fH) || fH.includes(v);
-    });
-  }
-
-  // 2. Year filter
-  if (state.yearFilter && yCol) {
-    rows = rows.filter(r => String(r[yCol]) === String(state.yearFilter));
-  }
-
-  // 3. Month filter
-  if (state.monthFilter && moCol) {
-    rows = rows.filter(r => String(r[moCol]) === String(state.monthFilter));
-  }
-
-  return rows;
-}
 
 // Helper: Canonicalize Channel Name (e.g. Booking -> BOOKING.COM, Expedia -> EXPEDIA)
 function canonicalizeChannelName(rawCh) {
