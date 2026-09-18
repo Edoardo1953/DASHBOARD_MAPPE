@@ -671,7 +671,7 @@ def open_browser_delayed(url):
             pass
 
 def run_server(port=PORT):
-    http.server.ThreadingHTTPServer.allow_reuse_address = True
+    http.server.ThreadingHTTPServer.allow_reuse_address = False
     actual_port = port
     server = None
     for p in range(port, port + 10):
@@ -700,9 +700,10 @@ def run_server(port=PORT):
     print(f"Premi CTRL+C per chiudere la dashboard.")
     print(f"==================================================")
     
-    import threading
-    t = threading.Thread(target=open_browser_delayed, args=(url,), daemon=True)
-    t.start()
+    # Browser is managed directly by launcher script or opened on request
+    # import threading
+    # t = threading.Thread(target=open_browser_delayed, args=(url,), daemon=True)
+    # t.start()
         
     try:
         server.serve_forever()
