@@ -1,7 +1,20 @@
+import sys
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.path.join(BASE_DIR, "server.log"), "a", encoding="utf-8")
+    except Exception:
+        sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.path.join(BASE_DIR, "server.log"), "a", encoding="utf-8")
+    except Exception:
+        sys.stderr = open(os.devnull, "w")
+
 import http.server
 import json
-import os
-import sys
 import glob
 import base64
 import io
@@ -16,7 +29,7 @@ from PIL import Image as PILImage
 import unicodedata
 import re
 
-PORT = 8080
+PORT = 8055
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def normalize_key(s):
