@@ -1014,11 +1014,13 @@ function updateRegionFilter() {
 
 // Filter rows by Hotel, Period, Country and Region
 function getFilteredRows() {
-  const hCol = state.columns.hotel;
-  const yCol = state.columns.year;
-  const moCol = state.columns.month;
-  const cCol = state.columns.country;
-  const rCol = state.columns.region;
+  const hCol = state.columns.hotel || Object.keys(state.excelData[0] || {}).find(k => /hotel|struttura|albergo|resort/i.test(k));
+  const yCol = state.columns.year || Object.keys(state.excelData[0] || {}).find(k => /anno|year/i.test(k));
+  const moCol = state.columns.month || Object.keys(state.excelData[0] || {}).find(k => /mese|month/i.test(k));
+  const cCol = state.columns.country || Object.keys(state.excelData[0] || {}).find(k => /^paese$|^country$|^nazione$/i.test(k)) || Object.keys(state.excelData[0] || {}).find(k => /paese|country|nazione/i.test(k));
+  const rCol = state.columns.region || Object.keys(state.excelData[0] || {}).find(k => /regione|region|estado/i.test(k));
+
+  const targetCountry = state.countryFilter ? String(state.countryFilter).trim() : '';
 
   return state.excelData.filter(r => {
     // Hotel filter
@@ -1032,13 +1034,13 @@ function getFilteredRows() {
     // Month filter
     if (state.monthFilter && moCol && String(r[moCol]) !== String(state.monthFilter)) return false;
     
-    // Country filter (applied when user selects a specific country)
-    if (state.countryFilter && cCol) {
+    // Country filter (applied when user selects a specific country or is in region/province view)
+    if (targetCountry && cCol) {
       const cVal = r[cCol];
-      if (!cVal && state.countryFilter !== 'Non indicato') return false;
+      if (!cVal && targetCountry !== 'Non indicato') return false;
       if (cVal) {
         const cNorm = normalizeStr(cVal);
-        const fNorm = normalizeStr(state.countryFilter);
+        const fNorm = normalizeStr(targetCountry);
         if (cNorm !== fNorm && !cNorm.includes(fNorm) && !fNorm.includes(cNorm)) {
           const alias1 = COUNTRY_ALIASES[cNorm] ? normalizeStr(COUNTRY_ALIASES[cNorm]) : cNorm;
           const alias2 = COUNTRY_ALIASES[fNorm] ? normalizeStr(COUNTRY_ALIASES[fNorm]) : fNorm;
