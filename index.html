@@ -829,9 +829,125 @@
             </div>
           </div>
 
+          <!-- Access Logs Card (Registro Accessi) -->
+          <div class="card mt-3">
+            <div class="table-card-header" style="flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 class="chart-title"><i class="ph ph-shield-check" style="color:#083361; margin-right:4px;"></i> Registro Accessi &amp; Login (<span id="logsRowCount">0</span>)</h3>
+                <p class="chart-subtitle">Storico dei login eseguiti dagli utenti con timestamp, dispositivo e browser</p>
+              </div>
+              <div class="table-controls-row" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div class="search-input-wrap" style="max-width: 220px;">
+                  <i class="ph ph-magnifying-glass"></i>
+                  <input type="text" id="logSearchInput" class="form-control input-search" placeholder="Filtra log..." oninput="renderAccessLogsTable(this.value)">
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="exportAccessLogsToExcel()" title="Esporta log in formato Excel">
+                  <i class="ph ph-file-xls"></i> Esporta Excel
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="clearAccessLogs()" title="Svuota cronologia locale">
+                  <i class="ph ph-trash"></i> Svuota Log
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="channel-table users-mgmt-table">
+                <thead>
+                  <tr>
+                    <th style="width: 45px; text-align: center;">#</th>
+                    <th style="min-width: 150px;">Data &amp; Ora</th>
+                    <th style="min-width: 130px;">Username</th>
+                    <th style="width: 100px; text-align: center;">Ruolo</th>
+                    <th style="min-width: 200px;">Dispositivo &amp; Browser</th>
+                    <th style="width: 110px;">Schermo</th>
+                  </tr>
+                </thead>
+                <tbody id="accessLogsTableBody">
+                  <!-- Dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Google Sheets Cloud Sync Card -->
+          <div class="card mt-3" style="background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="table-card-header" style="flex-wrap: wrap; gap: 10px;">
+              <div class="section-header-icon" style="margin-bottom: 0;">
+                <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-google-logo"></i></div>
+                <div>
+                  <h3 style="font-size: 1.05rem; font-weight: 700; color: #083361; margin: 0;">Sincronizzazione Cloud con Google Sheets (Opzionale)</h3>
+                  <p class="text-muted" style="margin: 2px 0 0 0; font-size: 0.8rem;">Invia automaticamente una riga su un tuo Google Foglio privato a ogni login effettuato da qualsiasi dispositivo.</p>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="openGoogleScriptModal()" title="Visualizza il codice Apps Script pronto">
+                <i class="ph ph-code"></i> Guida &amp; Codice Google Sheet
+              </button>
+            </div>
+
+            <div style="margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 260px;">
+                <input type="url" id="webhookUrlInput" class="form-control" placeholder="Incolla l'URL del Webhook Apps Script (es. https://script.google.com/macros/s/.../exec)">
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="saveWebhookUrl()">
+                <i class="ph ph-floppy-disk"></i> Salva URL
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="testWebhookLog()">
+                <i class="ph ph-paper-plane-tilt"></i> Invia Test
+              </button>
+            </div>
+          </div>
+
         </div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- Google Apps Script Instructions Modal -->
+  <div id="googleScriptModal" class="modal-overlay hidden">
+    <div class="modal-card" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📊</span>
+          <div>
+            <h3>Guida: Collegamento Registro a Google Sheets</h3>
+            <p class="modal-subtitle">Come registrare i login automaticamente in un tuo foglio Google</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeGoogleScriptModal()" title="Chiudi">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px; font-size: 0.88rem; max-height: 70vh; overflow-y: auto;">
+        <ol style="margin-left: 18px; line-height: 1.6; color: #334155;">
+          <li>Crea un nuovo foglio su <strong>Google Fogli</strong> (es. <em>"Registro Accessi Sombra"</em>).</li>
+          <li>Nella prima riga inserisci le intestazioni: <code>Data e Ora</code>, <code>Applicazione</code>, <code>Username</code>, <code>Ruolo</code>, <code>Dispositivo</code>, <code>Risoluzione</code>.</li>
+          <li>Dal menu in alto clicca su <strong>Estensioni &gt; Apps Script</strong>.</li>
+          <li>Cancella tutto e incolla questo codice:
+            <pre style="background:#0f172a; color:#38bdf8; padding:12px; border-radius:8px; font-size:0.78rem; overflow-x:auto; margin:8px 0;"><code>function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    sheet.appendRow([
+      data.timestamp || new Date().toLocaleString(),
+      data.app || 'DASHBOARD',
+      data.username || '',
+      data.role || '',
+      data.device || '',
+      data.screen || ''
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({status: 'ok'})).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({status: 'error', error: err.message})).setMimeType(ContentService.MimeType.JSON);
+  }
+}</code></pre>
+          </li>
+          <li>Clicca in alto a destra su <strong>Esegui il deployment &gt; Nuovo deployment</strong>.</li>
+          <li>Scegli <strong>Tipo: Applicazione web</strong>, imposta <em>"Chi ha accesso: Chiunque"</em> e clicca su <strong>Esegui deployment</strong>.</li>
+          <li>Copia l'<strong>URL dell'applicazione web</strong> generato e incollalo nel riquadro in questa dashboard!</li>
+        </ol>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="closeGoogleScriptModal()">Ho capito</button>
+      </div>
     </div>
   </div>
 
