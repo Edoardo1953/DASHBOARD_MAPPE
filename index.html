@@ -20,21 +20,51 @@
   <link rel="stylesheet" href="lib/leaflet.css">
   
   <!-- Custom Style -->
-  <link rel="stylesheet" href="style.css?v=4.0">
+  <link rel="stylesheet" href="style.css?v=5.1">
 </head>
 <body>
+  <!-- Login Overlay (Accesso Riservato Sombra Suite) -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="Loghi/logo sombra.png" alt="Sombra e Água Fresca" class="login-logo-img">
+        <h2>Accesso Riservato Suite</h2>
+        <p>Inserisci le tue credenziali per accedere alla Dashboard Mappe</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginUsername">Username (ID Utente)</label>
+          <div class="input-icon-wrap">
+            <i class="ph ph-user"></i>
+            <input type="text" id="loginUsername" class="form-control" placeholder="Es. admin o user" required autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="loginPassword">Password</label>
+          <div class="input-icon-wrap">
+            <i class="ph ph-lock-key"></i>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+            <i class="ph ph-eye toggle-pwd-icon" id="toggleLoginPwd" onclick="togglePasswordVisibility('loginPassword', this)"></i>
+          </div>
+        </div>
+        <div id="loginError" class="login-error-msg" style="display: none;">Credenziali non corrette. Verifica username e password.</div>
+        <button type="submit" class="btn btn-primary btn-login">
+          <i class="ph ph-sign-in"></i>
+          <span>Accedi alla Suite</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Mobile Sidebar Overlay -->
   <div id="mobileSidebarOverlay" class="mobile-overlay" onclick="toggleSidebar()"></div>
 
   <!-- Left Sidebar Navigation (DASHBOARD_BRASIL Style) -->
   <aside class="sidebar" id="appSidebar">
     <div class="sidebar-header">
-      <div class="brand-logo">
-        <span class="brand-icon">🏨</span>
-        <div class="brand-text">
-          <h2 class="brand-title">Hotel Analytics</h2>
-          <span class="brand-subtitle">Sombra Suite · Web App</span>
-        </div>
+      <div class="brand-container">
+        <img src="Loghi/logo sombra.png" alt="Sombra e Água Fresca" class="brand-logo-img">
+        <span class="brand-subtitle-custom">Hotel Analytics</span>
       </div>
     </div>
 
@@ -73,7 +103,37 @@
         <i class="ph ph-wrench"></i>
         <span>Strumenti &amp; Condivisione</span>
       </a>
+
+      <!-- Sezione Amministrazione (Solo ADMIN) -->
+      <div class="nav-section-title admin-only" id="navSectionAdmin" style="display: none;">
+        <span>AMMINISTRAZIONE</span>
+      </div>
+      <a href="#" class="nav-item admin-only" data-view="view-passwords" id="nav-passwords" style="display: none;">
+        <i class="ph ph-lock-key"></i>
+        <span>Gestione Password</span>
+      </a>
     </nav>
+
+    <!-- Sidebar User Session & Actions -->
+    <div class="sidebar-user-footer" id="sidebarUserFooter">
+      <div class="user-session-box">
+        <div class="user-avatar-circle">
+          <i class="ph ph-user"></i>
+        </div>
+        <div class="user-session-info">
+          <strong id="sessionUserName">admin</strong>
+          <span class="badge-role" id="sessionUserRole">ADMIN</span>
+        </div>
+      </div>
+      <div class="user-actions-row">
+        <button class="btn-user-action" id="btnOpenChangePwdModal" title="Cambia la tua password" onclick="openChangePasswordModal()">
+          <i class="ph ph-key"></i> Cambia Password
+        </button>
+        <button class="btn-user-action btn-logout" id="btnLogout" title="Disconnettiti" onclick="logoutApp()">
+          <i class="ph ph-sign-out"></i> Logout
+        </button>
+      </div>
+    </div>
 
     <!-- Sidebar Bottom Status Footer -->
     <div class="sidebar-footer">
@@ -137,12 +197,25 @@
             <!-- 4 Hotels Selector (Nord-Est Brasile) -->
             <div class="card control-group hotel-card-highlight">
               <div class="section-title">
-                <span class="control-label">🏨 Hotel / Struttura</span>
+                <span class="control-label">
+                  <img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="control-icon-logo" alt="Sombra">
+                  Hotel / Struttura
+                </span>
                 <span class="badge-hint">Nord-Est Brasile</span>
               </div>
               <div class="form-field">
-                <select id="hotelFilter" class="form-control font-weight-bold">
-                  <option value="">🏨 Gruppo Sombra (Tutti i 4 Hotel)</option>
+                <div class="custom-hotel-dropdown" id="customHotelDropdown">
+                  <button type="button" class="hotel-dropdown-btn" id="hotelDropdownBtn">
+                    <div class="hotel-dropdown-selected" id="hotelDropdownSelected">
+                      <img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="hotel-opt-logo" alt="">
+                      <span>Gruppo Sombra (Tutti i 4 Hotel)</span>
+                    </div>
+                    <i class="ph ph-caret-down"></i>
+                  </button>
+                  <div class="hotel-dropdown-menu" id="hotelDropdownMenu"></div>
+                </div>
+                <select id="hotelFilter" class="form-control font-weight-bold" style="display: none;">
+                  <option value="">Gruppo Sombra (Tutti i 4 Hotel)</option>
                 </select>
               </div>
             </div>
@@ -259,7 +332,10 @@
             <!-- Floating Summary Card (Prospetto Hotel / Gruppo Sombra & Provenienze) -->
             <div id="mapSummaryCard" class="map-summary-card">
               <div class="summary-card-header">
-                <div class="summary-hotel-badge" id="summaryHotelBadge">🏨 Gruppo Sombra</div>
+                <div class="summary-hotel-badge" id="summaryHotelBadge">
+                  <img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="summary-badge-logo" alt="Sombra">
+                  <span>Gruppo Sombra</span>
+                </div>
                 <div class="summary-period-badge" id="summaryPeriodBadge">📅 Anno 2026</div>
               </div>
               <div class="summary-card-title" id="summaryCardTitle">🌍 Provenienza Ospiti per Stato</div>
@@ -294,7 +370,7 @@
             </div>
 
             <div class="analytics-kpi-card">
-              <div class="kpi-icon-wrap bg-emerald"><i class="ph ph-buildings"></i></div>
+              <div class="kpi-icon-wrap bg-emerald"><img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="kpi-icon-img" alt="Sombra"></div>
               <div class="kpi-content">
                 <span class="kpi-label">Struttura Più Frequentata</span>
                 <h3 class="kpi-num" id="clientiKpiTopHotel">-</h3>
@@ -329,7 +405,7 @@
                   <h3 class="chart-title">Distribuzione Ospiti per Struttura Hotel</h3>
                   <p class="chart-subtitle">Quota di presenze nei 4 Hotel del Gruppo</p>
                 </div>
-                <span class="badge-tag">Gruppo Sombra</span>
+                <span class="badge-tag"><img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="badge-icon-logo" alt="Sombra"> Gruppo Sombra</span>
               </div>
               <div class="chart-canvas-container">
                 <canvas id="chartHotelDistribution"></canvas>
@@ -680,8 +756,148 @@
             </div>
           </div>
         </div>
+      <!-- ======================================================== -->
+      <!-- VIEW 6: GESTIONE PASSWORD & UTENTI (SOLO ADMIN)          -->
+      <!-- ======================================================== -->
+      <section class="view-section" id="view-passwords">
+        <div class="analytics-view-container">
+          
+          <div class="card mb-3">
+            <div class="table-card-header" style="flex-wrap: wrap; gap: 12px;">
+              <div class="section-header-icon" style="margin-bottom: 0;">
+                <div class="kpi-icon-wrap bg-blue"><i class="ph ph-shield-check"></i></div>
+                <div>
+                  <h3 style="font-size: 1.25rem; font-weight: 700; color: #083361; margin: 0;">Gestione Credenziali &amp; Password Utenti</h3>
+                  <p class="text-muted" style="margin: 2px 0 0 0; font-size: 0.85rem;">Pannello di controllo riservato all'Amministratore per assegnare, monitorare e revocare le password degli utenti esterni.</p>
+                </div>
+              </div>
+              <div class="table-actions">
+                <button class="btn btn-primary" onclick="openAddUserModal()">
+                  <i class="ph ph-user-plus"></i>
+                  <span>Nuovo Utente</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Banner -->
+          <div class="admin-info-banner">
+            <i class="ph ph-info" style="font-size: 1.4rem; color: #0284c7; flex-shrink: 0;"></i>
+            <div>
+              <strong style="color: #0c4a6e; font-size: 0.88rem;">Regole di Sicurezza &amp; Gestione Password:</strong>
+              <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #334155; line-height: 1.45;">
+                Gli <strong>Users</strong> esterni possono modificare autonomamente la loro password dal menu in basso a sinistra (pulsante <em>"Cambia Password"</em>).
+                Come <strong>ADMIN</strong>, hai il pieno controllo: puoi visualizzare in tempo reale le password assegnate o aggiornate, modificarle o eliminare l'utenza. Questa sezione non è visibile agli Users standard.
+              </p>
+            </div>
+          </div>
+
+          <!-- Users Table Card -->
+          <div class="card mt-3">
+            <div class="table-card-header">
+              <div>
+                <h3 class="chart-title">Elenco Credenziali Utenti (<span id="usersRowCount">0</span>)</h3>
+                <p class="chart-subtitle">Account attivi configurati per l'accesso alla Dashboard</p>
+              </div>
+              <div class="search-input-wrap" style="max-width: 260px;">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" id="userSearchInput" class="form-control input-search" placeholder="Cerca username..." oninput="renderUsersTable(this.value)">
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="channel-table users-mgmt-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px; text-align: center;">#</th>
+                    <th>Username (ID Accesso)</th>
+                    <th style="min-width: 180px;">Password Attuale</th>
+                    <th style="width: 130px; text-align: center;">Ruolo</th>
+                    <th style="width: 160px; text-align: right;">Azioni</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <!-- Dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- User Modal (Nuovo / Modifica Utente) -->
+  <div id="userModal" class="modal-overlay hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">👤</span>
+          <div>
+            <h3 id="userModalTitle">Nuovo Utente</h3>
+            <p class="modal-subtitle">Assegna credenziali di accesso</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeUserModal()" title="Chiudi">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 18px 20px;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="userInputUsername" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Username (ID Utente)</label>
+          <input type="text" id="userInputUsername" class="form-control" placeholder="Es. 18 mariorossi" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="userInputPassword" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Password</label>
+          <input type="text" id="userInputPassword" class="form-control" placeholder="Inserisci la password">
+          <small id="userPwdHint" class="text-muted" style="font-size:0.75rem; display:none; margin-top:3px;">Lascia vuoto per mantenere la password attuale</small>
+        </div>
+        <div class="form-group">
+          <label for="userInputRole" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Ruolo Utente</label>
+          <select id="userInputRole" class="form-control">
+            <option value="USER">USER (Utente Esterno)</option>
+            <option value="ADMIN">ADMIN (Amministratore Completo)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" onclick="closeUserModal()">Annulla</button>
+        <button class="btn btn-primary btn-sm" onclick="saveUserData()">Salva Utente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Password Modal (Per l'utente loggato) -->
+  <div id="changePasswordModal" class="modal-overlay hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">🔑</span>
+          <div>
+            <h3>Modifica la tua Password</h3>
+            <p class="modal-subtitle">Aggiorna la chiave di sicurezza del tuo account</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeChangePasswordModal()" title="Chiudi">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 18px 20px;">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="changePwdOld" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Password Attuale</label>
+          <input type="password" id="changePwdOld" class="form-control" placeholder="Inserisci la vecchia password" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="changePwdNew" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Nuova Password</label>
+          <input type="password" id="changePwdNew" class="form-control" placeholder="Minimo 4 caratteri" required>
+        </div>
+        <div class="form-group">
+          <label for="changePwdConfirm" style="display:block; font-size:0.82rem; font-weight:700; color:#0f172a; margin-bottom:5px;">Conferma Nuova Password</label>
+          <input type="password" id="changePwdConfirm" class="form-control" placeholder="Ripeti la nuova password" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" onclick="closeChangePasswordModal()">Annulla</button>
+        <button class="btn btn-primary btn-sm" onclick="submitChangePassword()">Aggiorna Password</button>
+      </div>
     </div>
   </div>
 
@@ -768,6 +984,6 @@
   <script src="lib/xlsx.full.min.js"></script>
   <script src="lib/html2canvas.min.js"></script>
   <script src="lib/jspdf.umd.min.js"></script>
-  <script src="app.js?v=4.0"></script>
+  <script src="app.js?v=5.1"></script>
 </body>
 </html>

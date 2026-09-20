@@ -6,14 +6,15 @@
   --excel-green: #107c41;
   --excel-green-hover: #0b5c30;
   --bg-main: #f4f7f9;
-  --bg-sidebar: #0f172a;
+  --bg-sidebar: #eef2f7;
   --bg-surface: #ffffff;
+  --sombra-blue: #083361;
   --text-primary: #0f172a;
-  --text-secondary: #64748b;
+  --text-secondary: #475569;
   --text-muted: #94a3b8;
   --text-light: #f8fafc;
-  --border: #e2e8f0;
-  --border-focus: #3b82f6;
+  --border: #cbd5e1;
+  --border-focus: #083361;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -44,70 +45,103 @@ body {
 }
 
 /* ======================================================== */
-/* 1. LEFT SIDEBAR (DASHBOARD_BRASIL Style)                  */
+/* 1. LEFT SIDEBAR (DASHBOARD_BRASIL Style - Sombra Theme)  */
 /* ======================================================== */
 .sidebar {
-  width: 230px;
-  min-width: 230px;
-  max-width: 230px;
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
   background-color: var(--bg-sidebar);
-  color: var(--text-light);
+  border-right: 1px solid #cbd5e1;
+  color: var(--sombra-blue);
   display: flex;
   flex-direction: column;
   height: 100vh;
   position: relative;
   flex-shrink: 0;
   z-index: 1050;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 3px 0 16px rgba(8, 51, 97, 0.08);
   transition: transform 0.3s ease;
 }
 
 .sidebar-header {
-  padding: 1.1rem 1rem 0.8rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.35rem 0.85rem 1.1rem 0.85rem;
+  border-bottom: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.55);
 }
 
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.brand-icon {
-  font-size: 1.6rem;
-  background: rgba(37, 99, 235, 0.2);
-  padding: 5px;
-  border-radius: var(--radius-sm);
-  line-height: 1;
-}
-
-.brand-text {
+.brand-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
 }
 
-.brand-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.01em;
+.brand-logo-img {
+  width: 100%;
+  max-width: 235px;
+  max-height: 130px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 3px 8px rgba(8, 51, 97, 0.18));
+  transition: transform 0.25s ease;
 }
 
-.brand-subtitle {
-  font-size: 0.68rem;
-  color: #94a3b8;
+.brand-logo-img:hover {
+  transform: scale(1.03);
+}
+
+.brand-subtitle-custom {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #083361;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
+  text-align: center;
+}
+
+/* Control icon logo & badges */
+.control-icon-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: -3px;
+  margin-right: 4px;
+}
+
+.summary-badge-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+.badge-icon-logo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+.kpi-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 0.75rem 0.6rem;
+  padding: 0.85rem 0.65rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -115,15 +149,16 @@ body {
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 .nav-section-title {
-  padding: 10px 10px 4px 10px;
-  font-size: 0.64rem;
-  font-weight: 700;
-  color: #64748b;
+  padding: 12px 10px 4px 10px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #083361;
+  opacity: 0.75;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -132,41 +167,43 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  color: #94a3b8;
+  padding: 9px 12px;
+  color: #083361;
   text-decoration: none;
-  font-size: 0.86rem;
-  font-weight: 500;
+  font-size: 0.88rem;
+  font-weight: 600;
   border-radius: var(--radius-sm);
   transition: var(--transition);
 }
 
 .nav-item i {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  color: #083361;
   transition: transform 0.2s ease;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background: rgba(8, 51, 97, 0.09);
+  color: #083361;
   transform: translateX(2px);
 }
 
 .nav-item.active {
-  background: var(--primary);
+  background: #083361;
   color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(8, 51, 97, 0.3);
 }
 
 .nav-item.active i {
+  color: #ffffff;
   transform: scale(1.05);
 }
 
 .sidebar-footer {
-  padding: 1rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.2);
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid #cbd5e1;
+  background: rgba(8, 51, 97, 0.04);
 }
 
 .file-status-box {
@@ -202,7 +239,7 @@ body {
 
 .status-info strong {
   font-size: 0.82rem;
-  color: #ffffff;
+  color: #083361;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -210,7 +247,7 @@ body {
 
 .status-info span {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 /* ======================================================== */
@@ -474,6 +511,121 @@ body {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Custom Hotel Dropdown with Logo */
+.custom-hotel-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.hotel-dropdown-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #083361;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.hotel-dropdown-btn:hover {
+  border-color: #083361;
+  background: #f8fafc;
+}
+
+.hotel-dropdown-btn:focus {
+  outline: none;
+  border-color: #083361;
+  box-shadow: 0 0 0 3px rgba(8, 51, 97, 0.12);
+}
+
+.hotel-dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotel-opt-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.tab-opt-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: -2px;
+  display: inline-block;
+}
+
+.hotel-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  padding: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.hotel-dropdown-menu.open {
+  display: flex;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hotel-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #083361;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hotel-dropdown-item:hover {
+  background: #eff6ff;
+  color: #083361;
+}
+
+.hotel-dropdown-item.active {
+  background: #083361;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.hotel-dropdown-item.active .hotel-opt-logo {
+  filter: brightness(0) invert(1);
 }
 
 /* Hotel Card Highlighting */
@@ -1825,6 +1977,347 @@ body {
   .info-grid-2col {
     grid-template-columns: 1fr;
   }
+}
+
+/* ======================================================== */
+/* AUTH & LOGIN OVERLAY                                     */
+/* ======================================================== */
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 20px;
+}
+
+.login-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-logo-img {
+  max-height: 80px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 6px;
+}
+
+.login-header h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #083361;
+  letter-spacing: -0.01em;
+}
+
+.login-header p {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-wrap > i:first-child {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  font-size: 1.15rem;
+  pointer-events: none;
+}
+
+.input-icon-wrap input {
+  padding-left: 38px;
+  padding-right: 38px;
+  height: 42px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 0.92rem;
+}
+
+.input-icon-wrap input:focus {
+  border-color: #083361;
+  box-shadow: 0 0 0 3px rgba(8, 51, 97, 0.12);
+}
+
+.toggle-pwd-icon {
+  position: absolute;
+  right: 12px;
+  color: #94a3b8;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.toggle-pwd-icon:hover {
+  color: #083361;
+}
+
+.login-error-msg {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.btn-login {
+  margin-top: 16px;
+  height: 44px;
+  background: #083361;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(8, 51, 97, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-login:hover {
+  background: #062649;
+  transform: translateY(-1px);
+}
+
+/* ======================================================== */
+/* SIDEBAR USER FOOTER                                      */
+/* ======================================================== */
+.sidebar-user-footer {
+  padding: 10px 12px;
+  border-top: 1px solid #cbd5e1;
+  background: rgba(8, 51, 97, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-session-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #083361;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.user-session-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  overflow: hidden;
+}
+
+.user-session-info strong {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #083361;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+.badge-role {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #083361;
+  color: #ffffff;
+}
+
+.badge-role.user {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.user-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.btn-user-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #083361;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-user-action:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-user-action.btn-logout {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+.btn-user-action.btn-logout:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* ======================================================== */
+/* ADMIN USERS & PASSWORD VIEW                              */
+/* ======================================================== */
+.admin-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.users-mgmt-table th {
+  background: #f8fafc;
+  color: #083361;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid #cbd5e1;
+}
+
+.users-mgmt-table td {
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.users-mgmt-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.pwd-display-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.pwd-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.pwd-toggle-btn:hover {
+  color: #083361;
+}
+
+.table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #083361;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-action-btn:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.table-action-btn.btn-delete:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.modal-sm {
+  max-width: 440px !important;
 }
 
 

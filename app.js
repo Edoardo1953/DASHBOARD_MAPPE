@@ -1,3 +1,378 @@
+// ========================================================
+// AUTH & USERS CONFIGURATION (DASHBOARD_BRASIL Standard)
+// ========================================================
+const DEFAULT_USERS = {
+  'admin': { password: 'edo2bia', role: 'ADMIN' },
+  'user': { password: 'user123', role: 'USER' },
+  '01 alfonso': { password: 'alfonso', role: 'USER' },
+  '02 sergio': { password: 'sergio', role: 'USER' },
+  '03 jean-pierre': { password: 'jean-pierre', role: 'USER' },
+  '04 stefano': { password: 'stefano', role: 'USER' },
+  '05 marco': { password: 'marco', role: 'USER' },
+  '06 susik': { password: 'susik', role: 'USER' },
+  '07 giorgio': { password: 'giorgio', role: 'USER' },
+  '08 marco': { password: 'marco', role: 'USER' },
+  '09 edoardo': { password: 'edoardo', role: 'USER' },
+  '10 enrico': { password: 'enrico', role: 'USER' },
+  '11 glenelg': { password: 'glenelg', role: 'USER' },
+  '12 marylene': { password: 'marylene', role: 'USER' },
+  '13 adonella': { password: 'adonella', role: 'USER' },
+  '16 salvatore': { password: 'salvatore', role: 'USER' },
+  '17 mmm': { password: 'mmm', role: 'USER' }
+};
+
+let currentUsername = null;
+let currentUserRole = null;
+
+function getUsers() {
+  try {
+    const stored = localStorage.getItem('sombra_mappe_users');
+    if (stored) {
+      const localUsers = JSON.parse(stored);
+      const mergedUsers = { ...DEFAULT_USERS, ...localUsers };
+      return mergedUsers;
+    }
+  } catch (e) {
+    console.error("Errore lettura utenti da localStorage:", e);
+  }
+  return { ...DEFAULT_USERS };
+}
+
+function saveUsers(usersObj) {
+  try {
+    localStorage.setItem('sombra_mappe_users', JSON.stringify(usersObj));
+  } catch (e) {
+    console.error("Errore salvataggio utenti in localStorage:", e);
+  }
+}
+
+function initAuth() {
+  try {
+    currentUserRole = sessionStorage.getItem('sombra_mappe_role');
+    currentUsername = sessionStorage.getItem('sombra_mappe_username');
+  } catch (e) {}
+
+  const overlay = document.getElementById('loginOverlay');
+  if (currentUserRole && currentUsername) {
+    if (overlay) overlay.style.display = 'none';
+    const nameEl = document.getElementById('sessionUserName');
+    const roleEl = document.getElementById('sessionUserRole');
+    if (nameEl) nameEl.textContent = currentUsername;
+    if (roleEl) {
+      roleEl.textContent = currentUserRole;
+      roleEl.className = `badge-role ${currentUserRole === 'ADMIN' ? 'admin' : 'user'}`;
+    }
+    applyRoleRestrictions();
+  } else {
+    if (overlay) overlay.style.display = 'flex';
+  }
+}
+
+function applyRoleRestrictions() {
+  const adminNavSec = document.getElementById('navSectionAdmin');
+  const adminNavItem = document.getElementById('nav-passwords');
+
+  if (currentUserRole === 'ADMIN') {
+    if (adminNavSec) adminNavSec.style.display = 'block';
+    if (adminNavItem) adminNavItem.style.display = 'flex';
+  } else {
+    if (adminNavSec) adminNavSec.style.display = 'none';
+    if (adminNavItem) adminNavItem.style.display = 'none';
+    if (state.activeView === 'view-passwords') {
+      switchView('view-mappa');
+    }
+  }
+}
+
+window.togglePasswordVisibility = function(inputId, iconEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (iconEl) iconEl.className = 'ph ph-eye-slash toggle-pwd-icon';
+  } else {
+    input.type = 'password';
+    if (iconEl) iconEl.className = 'ph ph-eye toggle-pwd-icon';
+  }
+};
+
+function setupAuthEventListeners() {
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const u = (document.getElementById('loginUsername').value || '').trim().toLowerCase();
+      const p = (document.getElementById('loginPassword').value || '').trim();
+      const errorEl = document.getElementById('loginError');
+
+      const usersObj = getUsers();
+      if (usersObj[u] && usersObj[u].password === p) {
+        currentUserRole = usersObj[u].role;
+        currentUsername = u;
+        try {
+          sessionStorage.setItem('sombra_mappe_role', currentUserRole);
+          sessionStorage.setItem('sombra_mappe_username', currentUsername);
+        } catch (err) {}
+
+        if (errorEl) errorEl.style.display = 'none';
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.style.display = 'none';
+
+        initAuth();
+        switchView('view-mappa');
+        showToast(`Benvenuto, ${u}!`);
+      } else {
+        if (errorEl) {
+          errorEl.textContent = 'Credenziali non corrette. Verifica username e password.';
+          errorEl.style.display = 'block';
+        }
+      }
+    });
+  }
+}
+
+window.logoutApp = function() {
+  if (confirm('Sei sicuro di voler effettuare il logout?')) {
+    try {
+      sessionStorage.removeItem('sombra_mappe_role');
+      sessionStorage.removeItem('sombra_mappe_username');
+    } catch (e) {}
+    currentUserRole = null;
+    currentUsername = null;
+    location.reload();
+  }
+};
+
+window.openChangePasswordModal = function() {
+  const oldP = document.getElementById('changePwdOld');
+  const newP = document.getElementById('changePwdNew');
+  const confP = document.getElementById('changePwdConfirm');
+  if (oldP) oldP.value = '';
+  if (newP) newP.value = '';
+  if (confP) confP.value = '';
+  const modal = document.getElementById('changePasswordModal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeChangePasswordModal = function() {
+  const modal = document.getElementById('changePasswordModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.submitChangePassword = function() {
+  const oldP = (document.getElementById('changePwdOld').value || '').trim();
+  const newP = (document.getElementById('changePwdNew').value || '').trim();
+  const confP = (document.getElementById('changePwdConfirm').value || '').trim();
+
+  if (!oldP || !newP || !confP) {
+    alert('Compila tutti i campi richiesti.');
+    return;
+  }
+
+  if (newP !== confP) {
+    alert('La nuova password e la conferma non coincidono!');
+    return;
+  }
+
+  if (newP.length < 3) {
+    alert('La nuova password deve contenere almeno 3 caratteri.');
+    return;
+  }
+
+  const usersObj = getUsers();
+  if (!currentUsername || !usersObj[currentUsername]) {
+    alert('Utente non trovato o sessione scaduta.');
+    return;
+  }
+
+  if (usersObj[currentUsername].password !== oldP) {
+    alert('La vecchia password inserita non è corretta.');
+    return;
+  }
+
+  usersObj[currentUsername].password = newP;
+  saveUsers(usersObj);
+  closeChangePasswordModal();
+  showToast('Password modificata con successo!');
+  if (currentUserRole === 'ADMIN' && state.activeView === 'view-passwords') {
+    renderUsersTable();
+  }
+};
+
+// ========================================================
+// ADMIN USER & PASSWORD MANAGEMENT FUNCTIONS
+// ========================================================
+let visiblePasswords = new Set();
+
+window.toggleTableRowPassword = function(uname) {
+  if (visiblePasswords.has(uname)) {
+    visiblePasswords.delete(uname);
+  } else {
+    visiblePasswords.add(uname);
+  }
+  const searchInput = document.getElementById('userSearchInput');
+  renderUsersTable(searchInput ? searchInput.value : '');
+};
+
+window.renderUsersTable = function(filterQuery = '') {
+  if (currentUserRole !== 'ADMIN') return;
+  const tbody = document.getElementById('usersTableBody');
+  const countEl = document.getElementById('usersRowCount');
+  if (!tbody) return;
+
+  const usersObj = getUsers();
+  let entries = Object.entries(usersObj);
+
+  const query = String(filterQuery || '').toLowerCase().trim();
+  if (query) {
+    entries = entries.filter(([uname, data]) => uname.toLowerCase().includes(query) || (data.role && data.role.toLowerCase().includes(query)));
+  }
+
+  if (countEl) countEl.textContent = entries.length;
+
+  if (entries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:#94a3b8;">Nessun utente trovato</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = entries.map(([uname, data], idx) => {
+    const isVisible = visiblePasswords.has(uname);
+    const pwdDisplay = isVisible ? data.password : '••••••••';
+    const isCurrent = uname.toLowerCase() === (currentUsername || '').toLowerCase();
+    const roleBadge = data.role === 'ADMIN' 
+      ? `<span class="badge-role" style="background:#083361; color:#fff;">ADMIN</span>`
+      : `<span class="badge-role" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;">USER</span>`;
+
+    return `
+      <tr>
+        <td style="text-align:center; color:#94a3b8; font-weight:600;">${idx + 1}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-user" style="color:#083361; font-size:1.1rem;"></i>
+            <strong style="color:#0f172a;">${uname}</strong>
+            ${isCurrent ? '<span style="font-size:0.7rem; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px; font-weight:700;">TU</span>' : ''}
+          </div>
+        </td>
+        <td>
+          <div class="pwd-display-box">
+            <span>${pwdDisplay}</span>
+            <button class="pwd-toggle-btn" title="${isVisible ? 'Nascondi password' : 'Mostra password'}" onclick="toggleTableRowPassword('${uname}')">
+              <i class="ph ${isVisible ? 'ph-eye-slash' : 'ph-eye'}"></i>
+            </button>
+          </div>
+        </td>
+        <td style="text-align:center;">${roleBadge}</td>
+        <td style="text-align:right;">
+          <div style="display:flex; justify-content:flex-end; gap:6px;">
+            <button class="table-action-btn" title="Modifica Utente / Password" onclick="openEditUserModal('${uname}', '${data.role}')">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            ${!isCurrent ? `
+              <button class="table-action-btn btn-delete" title="Elimina Utente" onclick="deleteUser('${uname}')">
+                <i class="ph ph-trash"></i>
+              </button>
+            ` : `
+              <button class="table-action-btn" style="opacity:0.3; cursor:not-allowed;" title="Non puoi eliminare il tuo stesso account" disabled>
+                <i class="ph ph-trash"></i>
+              </button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+let editingUsername = null;
+
+window.openAddUserModal = function() {
+  editingUsername = null;
+  document.getElementById('userModalTitle').textContent = 'Nuovo Utente';
+  const unameInput = document.getElementById('userInputUsername');
+  unameInput.value = '';
+  unameInput.disabled = false;
+  document.getElementById('userInputPassword').value = '';
+  document.getElementById('userInputRole').value = 'USER';
+  const hint = document.getElementById('userPwdHint');
+  if (hint) hint.style.display = 'none';
+  const modal = document.getElementById('userModal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.openEditUserModal = function(uname, role) {
+  editingUsername = uname;
+  document.getElementById('userModalTitle').textContent = `Modifica Utente '${uname}'`;
+  const unameInput = document.getElementById('userInputUsername');
+  unameInput.value = uname;
+  unameInput.disabled = true;
+  document.getElementById('userInputPassword').value = '';
+  document.getElementById('userInputRole').value = role || 'USER';
+  const hint = document.getElementById('userPwdHint');
+  if (hint) hint.style.display = 'block';
+  const modal = document.getElementById('userModal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeUserModal = function() {
+  const modal = document.getElementById('userModal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.saveUserData = function() {
+  const uname = (document.getElementById('userInputUsername').value || '').trim().toLowerCase();
+  const pwd = (document.getElementById('userInputPassword').value || '').trim();
+  const role = document.getElementById('userInputRole').value;
+
+  if (!uname) {
+    alert('Inserisci un Username valido.');
+    return;
+  }
+
+  const usersObj = getUsers();
+
+  if (editingUsername) {
+    // Modifica
+    if (pwd) {
+      usersObj[editingUsername].password = pwd;
+    }
+    usersObj[editingUsername].role = role;
+    saveUsers(usersObj);
+    closeUserModal();
+    renderUsersTable();
+    showToast(`Utente '${editingUsername}' aggiornato con successo!`);
+  } else {
+    // Nuovo
+    if (!pwd) {
+      alert('La password è obbligatoria per creare un nuovo utente.');
+      return;
+    }
+    if (usersObj[uname]) {
+      alert(`L'utente '${uname}' esiste già! Scegli un altro username o modifica quello esistente.`);
+      return;
+    }
+    usersObj[uname] = { password: pwd, role: role };
+    saveUsers(usersObj);
+    closeUserModal();
+    renderUsersTable();
+    showToast(`Nuovo utente '${uname}' creato con successo!`);
+  }
+};
+
+window.deleteUser = function(uname) {
+  if (uname.toLowerCase() === (currentUsername || '').toLowerCase()) {
+    alert('Non puoi eliminare il tuo stesso account amministratore.');
+    return;
+  }
+
+  if (confirm(`Sei sicuro di voler eliminare l'utente '${uname}'? L'accesso sarà revocato immediatamente.`)) {
+    const usersObj = getUsers();
+    delete usersObj[uname];
+    saveUsers(usersObj);
+    renderUsersTable();
+    showToast(`Utente '${uname}' eliminato.`);
+  }
+};
+
 // State Management
 const state = {
   excelData: [],
@@ -773,8 +1148,8 @@ async function fetchExcelData(sheetName = null) {
         
         let flagHtml = '📄';
         const sl = s.toLowerCase();
-        if (sl.includes('tutti') || sl.includes('4 hotel') || sl.includes('nord') || sl.includes('consol')) {
-          flagHtml = '🏨';
+        if (sl.includes('tutti') || sl.includes('4 hotel') || sl.includes('nord') || sl.includes('consol') || sl.includes('sombra')) {
+          flagHtml = '<img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="tab-opt-logo" alt="">';
         } else if (sl.includes('mond')) {
           flagHtml = '🌐';
         } else {
@@ -833,34 +1208,84 @@ async function fetchExcelData(sheetName = null) {
 function setupControls() {
   // 1. Hotel Selector (Gruppo Sombra / 4 Hotel Nord-Est Brasile)
   const hotelSelect = document.getElementById('hotelFilter');
+  const hotelDropdownMenu = document.getElementById('hotelDropdownMenu');
+  const hotelDropdownSelected = document.getElementById('hotelDropdownSelected');
+
+  let hotelList = new Set();
+  if (state.availableHotels && state.availableHotels.length > 0) {
+    state.availableHotels.forEach(h => hotelList.add(h));
+  }
+  
+  const hCol = state.columns.hotel;
+  if (hCol) {
+    state.excelData.map(r => r[hCol]).filter(Boolean).forEach(h => hotelList.add(String(h).trim()));
+  }
+
+  if (hotelList.size === 0) {
+    hotelList.add('SOMBRA RESORT');
+    hotelList.add('SPA SOMBRA');
+    hotelList.add('SOMBRA HOTEL');
+    hotelList.add('VILLAS SOMBRA');
+  }
+
+  const sortedHotels = [...hotelList].sort();
+
   if (hotelSelect) {
-    hotelSelect.innerHTML = '<option value="">🏨 Gruppo Sombra (Tutti i 4 Hotel)</option>';
-    
-    let hotelList = new Set();
-    if (state.availableHotels && state.availableHotels.length > 0) {
-      state.availableHotels.forEach(h => hotelList.add(h));
-    }
-    
-    const hCol = state.columns.hotel;
-    if (hCol) {
-      state.excelData.map(r => r[hCol]).filter(Boolean).forEach(h => hotelList.add(String(h).trim()));
-    }
-
-    if (hotelList.size === 0) {
-      hotelList.add('SOMBRA RESORT');
-      hotelList.add('SPA SOMBRA');
-      hotelList.add('SOMBRA HOTEL');
-      hotelList.add('VILLAS SOMBRA');
-    }
-
-    [...hotelList].sort().forEach(h => {
+    hotelSelect.innerHTML = '<option value="">Gruppo Sombra (Tutti i 4 Hotel)</option>';
+    sortedHotels.forEach(h => {
       const opt = document.createElement('option');
       opt.value = h;
-      opt.textContent = `🏨 ${h}`;
+      opt.textContent = h;
       if (state.hotelFilter && h.toLowerCase() === state.hotelFilter.toLowerCase()) {
         opt.selected = true;
       }
       hotelSelect.appendChild(opt);
+    });
+  }
+
+  // Populate Custom Hotel Dropdown with Logo for each Hotel!
+  if (hotelDropdownMenu && hotelDropdownSelected) {
+    const logoImg = '<img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="hotel-opt-logo" alt="Sombra">';
+    
+    const currentLabel = state.hotelFilter ? state.hotelFilter : 'Gruppo Sombra (Tutti i 4 Hotel)';
+    hotelDropdownSelected.innerHTML = `${logoImg} <span>${currentLabel}</span>`;
+
+    let menuHtml = `
+      <div class="hotel-dropdown-item ${!state.hotelFilter ? 'active' : ''}" data-value="">
+        ${logoImg}
+        <span>Gruppo Sombra (Tutti i 4 Hotel)</span>
+      </div>
+    `;
+
+    sortedHotels.forEach(h => {
+      const isActive = state.hotelFilter && h.toLowerCase() === state.hotelFilter.toLowerCase();
+      menuHtml += `
+        <div class="hotel-dropdown-item ${isActive ? 'active' : ''}" data-value="${h}">
+          ${logoImg}
+          <span>${h}</span>
+        </div>
+      `;
+    });
+
+    hotelDropdownMenu.innerHTML = menuHtml;
+
+    // Attach click events on dropdown items
+    hotelDropdownMenu.querySelectorAll('.hotel-dropdown-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        const val = item.dataset.value;
+        state.hotelFilter = val;
+        if (hotelSelect) hotelSelect.value = val;
+        
+        hotelDropdownMenu.querySelectorAll('.hotel-dropdown-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        
+        const label = val || 'Gruppo Sombra (Tutti i 4 Hotel)';
+        hotelDropdownSelected.innerHTML = `${logoImg} <span>${label}</span>`;
+        hotelDropdownMenu.classList.remove('open');
+        
+        renderAll();
+      });
     });
   }
 
@@ -1617,12 +2042,13 @@ function updateSummaryPanel(aggregated) {
   // 1. Hotel Name Badge
   const hotelBadge = document.getElementById('summaryHotelBadge');
   if (hotelBadge) {
+    const iconHtml = '<img src="Loghi/Sombra marca nova sfondo trasparente senza testo.png" class="summary-badge-logo" alt="Sombra">';
     if (!state.hotelFilter || state.hotelFilter === '' || /tutti/i.test(state.hotelFilter)) {
-      hotelBadge.textContent = '🏨 Gruppo Sombra';
+      hotelBadge.innerHTML = `${iconHtml} <span>Gruppo Sombra</span>`;
       hotelBadge.title = 'Gruppo Sombra (Tutti i 4 Hotel Nord-Est)';
     } else {
       const hClean = state.hotelFilter.replace(/^🏨\s*/, '');
-      hotelBadge.textContent = `🏨 ${hClean}`;
+      hotelBadge.innerHTML = `${iconHtml} <span>${hClean}</span>`;
       hotelBadge.title = hClean;
     }
   }
@@ -2325,6 +2751,15 @@ function switchView(viewId) {
     if (titleEl) titleEl.textContent = 'Strumenti & Personalizzazione Mappe';
     if (subEl) subEl.textContent = 'Configurazione colori, sfondi cartografici, visualizzazione confini ed etichette';
     if (btnExportPng) btnExportPng.style.display = 'none';
+  } else if (viewId === 'view-passwords') {
+    if (currentUserRole !== 'ADMIN') {
+      switchView('view-mappa');
+      return;
+    }
+    if (titleEl) titleEl.textContent = 'Gestione Credenziali & Password Utenti';
+    if (subEl) subEl.textContent = 'Pannello di controllo riservato all\'Amministratore per assegnare, visualizzare e gestire le password degli utenti';
+    if (btnExportPng) btnExportPng.style.display = 'none';
+    renderUsersTable();
   } else if (viewId === 'view-info') {
     if (titleEl) titleEl.textContent = 'Condivisione Web & Configurazione';
     if (subEl) subEl.textContent = 'Guida alla distribuzione in rete aziendale e hosting Cloud';
@@ -2897,6 +3332,9 @@ function exportDatabaseToExcel() {
 
 // Event Listeners Setup
 function setupEventListeners() {
+  // Auth Event Listeners (Login form submit)
+  setupAuthEventListeners();
+
   // 0. Navigation Sidebar (DASHBOARD_BRASIL Style)
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
     item.addEventListener('click', e => {
@@ -2906,7 +3344,21 @@ function setupEventListeners() {
     });
   });
 
-  // 1. Hotel Filter Change
+  // 1. Hotel Filter Change & Custom Dropdown Toggle
+  const hotelDropdownBtn = document.getElementById('hotelDropdownBtn');
+  const hotelDropdownMenu = document.getElementById('hotelDropdownMenu');
+  if (hotelDropdownBtn && hotelDropdownMenu) {
+    hotelDropdownBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      hotelDropdownMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#customHotelDropdown')) {
+        hotelDropdownMenu.classList.remove('open');
+      }
+    });
+  }
+
   const hotelEl = document.getElementById('hotelFilter');
   if (hotelEl) {
     hotelEl.addEventListener('change', e => {
@@ -3301,6 +3753,7 @@ function hideLoading() {
 
 // App Bootstrap
 window.addEventListener('DOMContentLoaded', async () => {
+  initAuth();
   initMap();
   setupEventListeners();
   await loadGeoDatasets();
