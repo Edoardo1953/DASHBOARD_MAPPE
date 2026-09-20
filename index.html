@@ -773,7 +773,11 @@
                   <p class="text-muted" style="margin: 2px 0 0 0; font-size: 0.85rem;">Pannello di controllo riservato all'Amministratore per assegnare, monitorare e revocare le password degli utenti esterni.</p>
                 </div>
               </div>
-              <div class="table-actions">
+              <div class="table-actions" style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn btn-secondary" onclick="resetDefaultUsers()" title="Ripristina elenco iniziale degli utenti">
+                  <i class="ph ph-arrow-counter-clockwise"></i>
+                  <span>Ripristina Default</span>
+                </button>
                 <button class="btn btn-primary" onclick="openAddUserModal()">
                   <i class="ph ph-user-plus"></i>
                   <span>Nuovo Utente</span>

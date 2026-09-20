@@ -27,14 +27,21 @@ let currentUserRole = null;
 function getUsers() {
   try {
     const stored = localStorage.getItem('sombra_mappe_users');
-    if (stored) {
+    if (stored !== null) {
       const localUsers = JSON.parse(stored);
-      const mergedUsers = { ...DEFAULT_USERS, ...localUsers };
-      return mergedUsers;
+      if (localUsers && typeof localUsers === 'object') {
+        // Garantisci sempre che l'account admin predefinito esista
+        if (!localUsers['admin']) {
+          localUsers['admin'] = { password: 'edo2bia', role: 'ADMIN' };
+        }
+        return localUsers;
+      }
     }
   } catch (e) {
     console.error("Errore lettura utenti da localStorage:", e);
   }
+  // Inizializzazione iniziale con DEFAULT_USERS
+  saveUsers(DEFAULT_USERS);
   return { ...DEFAULT_USERS };
 }
 
@@ -45,6 +52,14 @@ function saveUsers(usersObj) {
     console.error("Errore salvataggio utenti in localStorage:", e);
   }
 }
+
+window.resetDefaultUsers = function() {
+  if (confirm('Vuoi davvero ripristinare l\'elenco predefinito degli utenti iniziali?')) {
+    saveUsers(DEFAULT_USERS);
+    renderUsersTable();
+    showToast('Elenco utenti ripristinato ai valori predefiniti.');
+  }
+};
 
 function initAuth() {
   try {
